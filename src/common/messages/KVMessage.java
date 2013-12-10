@@ -35,6 +35,9 @@ public interface KVMessage {
 	 */
 	public StatusType getStatus();
 	
+	
+	public byte[] getBytes();
+	
 }
 
 
