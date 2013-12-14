@@ -8,48 +8,6 @@ public class Message {
     }
     
     private byte[] payload;
-    /**
-	 * @return the payload
-	 */
-	public byte[] getPayload() {
-		return payload;
-	}
-
-	/**
-	 * @param payload the payload to set
-	 */
-	public void setPayload(byte[] payload) {
-		this.payload = payload;
-	}
-
-	/**
-	 * @return the permission
-	 */
-	public PermissionType getPermission() {
-		return permission;
-	}
-
-	/**
-	 * @param permission the permission to set
-	 */
-	public void setPermission(PermissionType permission) {
-		this.permission = permission;
-	}
-
-	/**
-	 * @return the msgBytes
-	 */
-	public byte[] getMsgBytes() {
-		return msgBytes;
-	}
-
-	/**
-	 * @param msgBytes the msgBytes to set
-	 */
-	public void setMsgBytes(byte[] msgBytes) {
-		this.msgBytes = msgBytes;
-	}
-
 	private PermissionType permission;
     private byte[] msgBytes;
     private byte admin_flag = 0;
@@ -92,5 +50,45 @@ public class Message {
     		throw new IllegalArgumentException("Malformed message");
     	} 	
     }
+    
+    
+	public byte[] getPayload() {
+		return payload;
+	}
+
+	/**
+	 * @param payload the payload to set
+	 */
+	public void setPayload(byte[] payload) {
+		this.payload = payload;
+	}
+
+	/**
+	 * @return the permission
+	 */
+	public PermissionType getPermission() {
+		return permission;
+	}
+
+	/**
+	 * @param permission the permission to set
+	 */
+	public void setPermission(PermissionType permission) {
+		this.permission = permission;
+	}
+
+	/**
+	 * @return the msgBytes
+	 */
+	public byte[] getMsgBytes() {
+		return msgBytes;
+	}
+
+	/**
+	 * @param msgBytes the msgBytes to set
+	 */
+	public void setMsgBytes(byte[] msgBytes) {
+		this.msgBytes = msgBytes;
+	}
 
 }

@@ -64,14 +64,14 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         this.msgBytes = tmp;
 	}
 	
-	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, String number){
+	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, int number){
         this.type = statustype;
-        this.number = Integer.parseInt(number);
+        this.number = number;
         
         byte[] identifier0 = type_identifier.getBytes();
         byte[] identifier1 = number_identifier.getBytes();
         byte[] statusbytes = type.name().getBytes();
-        byte[] numberbytes = number.getBytes();
+        byte[] numberbytes = String.valueOf(number).getBytes();
         
         byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + numberbytes.length + 1];
         

@@ -20,7 +20,7 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, "5");
+		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, 5);
 		
 		System.out.println(msg.getNumber());
 		
