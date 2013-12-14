@@ -24,7 +24,6 @@ public class ECSServer implements ECS {
      * @param args contains the port number at args[0].
      */
 
-	@Override
 	public void initService(int numberOfNodes) {
 		String host = null;
 		String port = null;
@@ -41,6 +40,10 @@ public class ECSServer implements ECS {
 				e.printStackTrace();
 			}
 	      }
+		//for(int x = 0; x < numberOfNodes; x++) {
+		//	
+	    //  }
+	
 	}
 
 	@Override
@@ -88,8 +91,10 @@ public class ECSServer implements ECS {
 					while ((line = bufferedReader.readLine()) != null) {
 						String[] tokens = line.split("\\s+");
 						ServerInfo temp = new ServerInfo();
+						System.out.println(tokens[1]);
 						temp.setAddress(tokens[1]);
 						temp.setPort(Integer.parseInt(tokens[2]));
+						System.out.println(tokens[2]);
 						iParameters.add(temp);
 					}
 					fileReader.close();
@@ -97,6 +102,31 @@ public class ECSServer implements ECS {
 					e.printStackTrace();
 				}
 			}
+			
+			 /**
+		     * Sorry .... this is just for testing 
+		     * Have to delete 
+		     */
+			
+			//<------------------------------------------------>
+			String host = null;
+			String port = null;
+			// TODO Auto-generated method stub
+			for(int x = 0; x < 4; x++) {
+				host = iParameters.get(x).getAddress();
+				port = Integer.toString(iParameters.get(x).getPort());
+				ProcessBuilder pb = new ProcessBuilder("nohup", "ssh", "-n", host, "java -jar", "/tmp/ms3-server.jar", port, "&");
+				
+				pb.redirectErrorStream(); // redirect stderr to stdout
+				try {
+					Process process = pb.start();
+					System.out.println(host+" started on "+port);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		      }
+			//<------------------------------------------------>
 		} catch (IOException e) {
 			System.out.println("Error! Unable to initialize logger!");
 			e.printStackTrace();
@@ -106,5 +136,5 @@ public class ECSServer implements ECS {
 			System.out.println("Usage: Server <port>!");
 			System.exit(1);
 		}
-    }
+	}
 }
