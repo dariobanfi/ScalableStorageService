@@ -90,11 +90,7 @@ public class ECSServer implements ECS {
 					String line;
 					while ((line = bufferedReader.readLine()) != null) {
 						String[] tokens = line.split("\\s+");
-						ServerInfo temp = new ServerInfo();
-						System.out.println(tokens[1]);
-						temp.setAddress(tokens[1]);
-						temp.setPort(Integer.parseInt(tokens[2]));
-						System.out.println(tokens[2]);
+						ServerInfo temp = new ServerInfo(tokens[1], Integer.parseInt(tokens[2]));
 						iParameters.add(temp);
 					}
 					fileReader.close();
