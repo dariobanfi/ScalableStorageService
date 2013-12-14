@@ -4,7 +4,7 @@ import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
 
-public interface KVAdminMessage {
+public interface KVAdminMessage extends Message{
 	
     public enum StatusType {
     	INIT_KV_SERVER,          

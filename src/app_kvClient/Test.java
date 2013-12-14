@@ -1,5 +1,6 @@
 package app_kvClient;
 
+import common.messages.*;
 import common.objects.Metadata;
 import common.objects.ServerInfo;
 
@@ -18,14 +19,24 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		byte[] b = m.getBytes();
+		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE);
 		
-		System.out.println(new String(m.getBytes()));
-
+		byte[] b1 = msg.getBytes();
 		
-		Metadata m1 = new Metadata(b);
+		System.out.println(new String(msg.getBytes()));
 		
-		System.out.println(new String(m1.getBytes()));
+		KVAdminMessage msg1 = new KVAdminMessageImpl(b1);
+		
+		System.out.println(new String(msg1.getBytes()));
+		
+//		byte[] b = m.getBytes();
+//		
+//		System.out.println(new String(m.getBytes()));
+//
+//		
+//		Metadata m1 = new Metadata(b);
+//		
+//		System.out.println(new String(m1.getBytes()));
 
 		
 		

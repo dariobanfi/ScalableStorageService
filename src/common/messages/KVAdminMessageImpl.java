@@ -1,5 +1,9 @@
 package common.messages;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+
 import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
@@ -94,6 +98,53 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         
         this.msgBytes = tmp;
 		
+	}
+	
+	
+	public KVAdminMessageImpl(byte[] bytes){
+		List<Byte> readelement =  new ArrayList<Byte>();
+		String identifier = null;
+		for(int i=0;i<bytes.length;i++){
+			
+			
+			if(bytes[i]==SEPARATOR || bytes[i] == END){
+				byte[] readelementarr = new byte[readelement.size()];
+		        for (int j = 0; j < readelement.size(); j++){
+		        	readelementarr[j] = readelement.get(j);
+		        }
+		        if(i%2==0){
+		        	System.out.println(new String(readelementarr));
+		        	identifier = new String(readelementarr);
+		        	readelement.clear();
+		        }
+		        else{
+		        	
+		        	if(identifier.equals(type_identifier)){
+			           try{
+			        	   
+			        	   this.type = KVAdminMessage.StatusType.valueOf(new String(readelementarr));
+			        	   System.out.println(this.type);
+			        	   readelement.clear();
+		                }
+		                catch(IllegalArgumentException e){
+		                        throw new IllegalArgumentException("Malformed request");
+		                }
+		        	}
+		        	else if(identifier.equals(metadata_identifier)){
+		        		this.metadata = new Metadata(readelementarr);
+		        		readelement.clear();
+		        	}
+		        	
+		        	else{
+		        		throw new IllegalArgumentException("Serialization error");
+		        	}
+				}
+		        
+			}
+			else{
+				readelement.add(bytes[i]);
+			}
+		}
 	}
 
 
