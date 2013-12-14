@@ -54,10 +54,14 @@ public class ClientConnection implements Runnable {
 			
 			while(isOpen) {
 				try {
-					KVMessage latestMsg = receiveMessage();
-					if(latestMsg==null)
+				    Message latestMsg = receiveMessage();
+				    if(latestMsg==null)
 						break;
-					processKVMessage(latestMsg);
+				    if(latestMsg.getPermission().equals(Message.PermissionType.ADMIN)){
+				    	processAMessage(latestMsg);
+				    } else if(latestMsg.getPermission().equals(Message.PermissionType.USER)){
+				    	processKVMessage(latestMsg);
+				    } 
 				} catch (IOException ioe) {
 					logger.error("Error! Connection lost!");
 					isOpen = false;
@@ -81,6 +85,25 @@ public class ClientConnection implements Runnable {
 		}
 	}
 	
+	/**
+	 * @param message
+	 * 
+	 * Receives a object KVMEssage and executes the method get or put, sending back the 
+	 * response from the command
+	 * 
+	 */
+	private void processAMessage(Message message){
+		KVAdminMessage msg = new KVAdminMessageImpl(message.getPayload());
+		// Start
+		if(msg.getStatusType().equals(KVAdminMessage.StatusType.START)){
+			
+		}
+		// Stop
+		if(msg.getStatusType().equals(KVAdminMessage.StatusType.STOP)){
+			
+		}// Stop
+		
+	}
 	
 	
 	/**
@@ -90,17 +113,19 @@ public class ClientConnection implements Runnable {
 	 * response from the command
 	 * 
 	 */
-	private void processKVMessage(KVMessage message){
-		if(message.getStatus().equals(KVMessage.StatusType.GET)){
-			KVMessage response = get(message.getKey());
+	private void processKVMessage(Message message){
+		KVMessage msg = new KVMessageImpl(message.getPayload());
+		
+		if(msg.getStatus().equals(KVMessage.StatusType.GET)){
+			KVMessage response = get(msg.getKey());
 			try {
 				sendMessage(response);
 			} catch (IOException e) {
 				logger.error("error while sending response");
 			}
 		}
-		else if (message.getStatus().equals(KVMessage.StatusType.PUT)){
-			KVMessage response = put(message.getKey(),message.getValue());
+		else if (msg.getStatus().equals(KVMessage.StatusType.PUT)){
+			KVMessage response = put(msg.getKey(),msg.getValue());
 			try {
 				sendMessage(response);
 			} catch (IOException e) {
@@ -141,7 +166,7 @@ public class ClientConnection implements Runnable {
 	 * Then it passess the byte array to KVMessageImpl which will try to marshal it into
 	 * a KVMessage, which will be returned by the method
 	 */
-	private KVMessage receiveMessage() throws IOException {
+	private Message receiveMessage() throws IOException {
 		
 		int index = 0;
 		byte[] msgBytes = null, tmp = null;
@@ -192,9 +217,9 @@ public class ClientConnection implements Runnable {
 		}
 		
 		msgBytes = tmp;
-		KVMessage retvalue;
+		Message retvalue;
 		try{
-			retvalue = new KVMessageImpl(msgBytes);
+			retvalue = new Message(msgBytes);
 		}
 		catch(IllegalArgumentException e){
 			logger.error(e.getMessage());
