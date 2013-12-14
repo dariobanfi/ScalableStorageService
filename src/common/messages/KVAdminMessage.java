@@ -16,7 +16,9 @@ public interface KVAdminMessage {
     	LOCK_WRITE,
     	UNLOCK_WRITE,
     	MOVE_DATA,  		
-    	UPDATE
+    	UPDATE,
+    	ADD_NODE,
+    	REMOVE_NODE
     }
 
 	/**
