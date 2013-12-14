@@ -20,9 +20,13 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, 5);
+		System.out.println(m.toString());
 		
-		System.out.println(msg.getNumber());
+		System.out.println(m.get("f08343938402ebb5110716c6e836f5a2").toString());
+		
+//		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, 5);
+		
+//		System.out.println(msg.getNumber());
 		
 //		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, new Range("11", "22"), new ServerInfo("111",222));
 //		

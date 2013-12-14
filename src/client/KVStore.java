@@ -1,43 +1,68 @@
 package client;
 
 
+import java.net.*;
+import java.io.*;
+
+import org.apache.log4j.Logger;
+
 import common.messages.KVMessage;
+import common.objects.Metadata;
+import communication.CommunicationModule;
 
 public class KVStore implements KVCommInterface {
 
-	
-	/**
-	 * Initialize KVStore with address and port of KVServer
-	 * @param address the address of the KVServer
-	 * @param port the port of the KVServer
-	 */
-	public KVStore(String address, int port) {
-		
-	}
-	
-	@Override
-	public void connect() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
+    private Logger logger = Logger.getRootLogger();
+    CommunicationModule connection;
+    Metadata metadata;
+    
+    public KVStore(String address, int port){
+            this.connection = new CommunicationModule(address, port);
+    }
+    
+    @Override
+    public void connect() throws UnknownHostException, IOException {
+            connection.connect();
+    }        
+    
+    /* (non-Javadoc)
+     * @see client.KVCommInterface#put(java.lang.String, java.lang.String)
+     * 
+     * Puts the message and returns the KVMessage Response
+     * 
+     */
+    @Override
+    public KVMessage put(String key, String value) throws Exception {
+            KVMessage request = new KVMessageImpl(KVMessage.StatusType.PUT, key, value);
+            connection.sendBytes(request.getBytes());
+            byte [] response = connection.receiveBytes();
+            KVMessage retval = new KVMessageImpl(response);
+            return retval;
+    }
 
-	@Override
-	public void disconnect() {
-		// TODO Auto-generated method stub
-		
-	}
+    /* (non-Javadoc)
+     * @see client.KVCommInterface#get(java.lang.String)
+     * 
+     * Gets the message and returns the KVMessage response
+     */
+    @Override
+    public KVMessage get(String key) throws Exception {
+            KVMessage request = new KVMessageImpl(KVMessage.StatusType.GET, key);
+            connection.sendBytes(request.getBytes());
+            byte [] response = connection.receiveBytes();
+            KVMessage retval = new KVMessageImpl(response);
+            return retval;
+    }
 
-	@Override
-	public KVMessage put(String key, String value) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public KVMessage get(String key) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public void disconnect() {
+            try {
+                    connection.closeConnection();
+            } catch (IOException e) {
+                    logger.error("Unable to close connection.");
+            }
+    }        
 
 	
 }

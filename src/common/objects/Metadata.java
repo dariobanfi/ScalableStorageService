@@ -7,11 +7,11 @@ import java.util.*;
 
 public class Metadata {
 
-	private Map<String,ServerInfo> metadata;
+	private SortedMap<String, ServerInfo> metadata;
 	private final byte SEMICOLON = 59;
 	
 	public Metadata(){
-		this.metadata = new TreeMap<String,ServerInfo>();
+		this.metadata = new TreeMap<String ,ServerInfo>();
 	}
 	
 	public Metadata(byte[] bytes){
@@ -74,24 +74,48 @@ public class Metadata {
 		
 	}
 	
-	public byte[] getBytes(){
-		List<Byte> metadatalist =  new ArrayList<Byte>();
-		for(Map.Entry<String,ServerInfo> entry : metadata.entrySet()) {
-			  ServerInfo serverinfo = entry.getValue();
-			  
-			  byte[] representation = serverinfo.getBytes();
-			  for(byte b:representation){
-				  metadatalist.add(b);
-			  }
-			  metadatalist.add(SEMICOLON);
+	
+	 public ServerInfo get(String key) {
+		   if (metadata.isEmpty()) {
+		     return null;
+		   }
+		   if (!metadata.containsKey(key)) {
+			     SortedMap<String, ServerInfo> tailMap = metadata.tailMap(key);
+			     key = tailMap.isEmpty() ? metadata.firstKey() : tailMap.firstKey();
+		   }
+		   return metadata.get(key);
+		 }
+	 
+	 
+		public byte[] getBytes(){
+			List<Byte> metadatalist =  new ArrayList<Byte>();
+			for(Map.Entry<String,ServerInfo> entry : metadata.entrySet()) {
+				  ServerInfo serverinfo = entry.getValue();
+				  
+				  byte[] representation = serverinfo.getBytes();
+				  for(byte b:representation){
+					  metadatalist.add(b);
+				  }
+				  metadatalist.add(SEMICOLON);
+			}
+			
+			byte[] returnbytes = new byte[metadatalist.size()];
+	        for (int j = 0; j < metadatalist.size(); j++){
+	        	returnbytes[j] = metadatalist.get(j);
+	        }
+	        
+	        return returnbytes;
 		}
 		
-		byte[] returnbytes = new byte[metadatalist.size()];
-        for (int j = 0; j < metadatalist.size(); j++){
-        	returnbytes[j] = metadatalist.get(j);
-        }
-        
-        return returnbytes;
-	}
+		public String toString(){
+			String retvalue = "";
+			for(Map.Entry<String,ServerInfo> entry : metadata.entrySet()) {
+				  ServerInfo serverinfo = entry.getValue();
+				  String key = entry.getKey();
+				  retvalue =retvalue + "|" + key + ";" + new String(serverinfo.getBytes());
+			}
+			
+	        return retvalue;
+		}
 	
 }
