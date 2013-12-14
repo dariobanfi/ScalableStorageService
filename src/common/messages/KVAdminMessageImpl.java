@@ -2,8 +2,6 @@ package common.messages;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
-
 import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
@@ -102,10 +100,10 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	
 	
 	public KVAdminMessageImpl(byte[] bytes){
+		this.msgBytes = bytes;
 		List<Byte> readelement =  new ArrayList<Byte>();
 		String identifier = null;
 		for(int i=0;i<bytes.length;i++){
-			
 			
 			if(bytes[i]==SEPARATOR || bytes[i] == END){
 				byte[] readelementarr = new byte[readelement.size()];
@@ -113,7 +111,6 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        	readelementarr[j] = readelement.get(j);
 		        }
 		        if(i%2==0){
-		        	System.out.println(new String(readelementarr));
 		        	identifier = new String(readelementarr);
 		        	readelement.clear();
 		        }
@@ -123,7 +120,6 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 			           try{
 			        	   
 			        	   this.type = KVAdminMessage.StatusType.valueOf(new String(readelementarr));
-			        	   System.out.println(this.type);
 			        	   readelement.clear();
 		                }
 		                catch(IllegalArgumentException e){
@@ -132,6 +128,16 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        	}
 		        	else if(identifier.equals(metadata_identifier)){
 		        		this.metadata = new Metadata(readelementarr);
+		        		readelement.clear();
+		        	}
+		        	
+		        	else if(identifier.equals(range_identifier)){
+		        		this.range = new Range(readelementarr);
+		        		readelement.clear();
+		        	}
+		        	
+		        	else if(identifier.equals(serverinfo_identifier)){
+		        		this.serverinfo = new ServerInfo(readelementarr);
 		        		readelement.clear();
 		        	}
 		        	
@@ -176,5 +182,7 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	public byte[] getBytes() {
 		return this.msgBytes;
 	}
+
+
 
 }

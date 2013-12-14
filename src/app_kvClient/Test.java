@@ -19,7 +19,7 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE);
+		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, m);
 		
 		byte[] b1 = msg.getBytes();
 		
@@ -27,7 +27,9 @@ public class Test {
 		
 		KVAdminMessage msg1 = new KVAdminMessageImpl(b1);
 		
-		System.out.println(new String(msg1.getBytes()));
+		System.out.println(msg1.getStatusType());
+		System.out.println(new String(msg1.getMetadata().getBytes()));
+
 		
 //		byte[] b = m.getBytes();
 //		

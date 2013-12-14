@@ -1,11 +1,21 @@
 package common.messages;
 
-public interface Message {
+public class Message {
 	
     public enum PermissionType {
     	USER,
     	ADMIN
     }
-	PermissionType getPermissionType();
+    
+    private byte[] payload;
+    private PermissionType permission;
+    
+    public Message(byte[] bytes){
+    	
+    }
+    
+    public Message(PermissionType p, byte[] payload){
+    	
+    }
 
 }
