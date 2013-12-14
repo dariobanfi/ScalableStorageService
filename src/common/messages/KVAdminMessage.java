@@ -1,6 +1,8 @@
 package common.messages;
 
 import common.objects.Metadata;
+import common.objects.Range;
+import common.objects.ServerInfo;
 
 public interface KVAdminMessage {
 	
@@ -22,11 +24,12 @@ public interface KVAdminMessage {
 	 */
 	public StatusType getStatusType();
 	
-	
-	/**
-	 * @return the value that is associated with this message, 
-	 * 		null if not value is associated.
-	 */
 	public Metadata getMetadata();
+	
+	public Range getRange();
+	
+	public ServerInfo getServerInfo();
+	
+	public byte[] getBytes();
 
 }
