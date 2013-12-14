@@ -1,7 +1,17 @@
 package app_kvEcs;
 
-public interface ECS {
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.Map;
 
+import org.apache.log4j.*;
+
+import common.messages.*;
+
+
+public interface ECS {
 	
 	public void initService(int numberOfNodes);
 	
