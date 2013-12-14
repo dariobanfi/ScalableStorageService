@@ -7,6 +7,7 @@ import common.objects.ServerInfo;
 public interface KVAdminMessage {
 	
     public enum StatusType {
+    	INIT_SERVICE,
     	INIT_KV_SERVER,          
     	START,
     	STOP,
@@ -27,6 +28,8 @@ public interface KVAdminMessage {
 	public Metadata getMetadata();
 	
 	public Range getRange();
+	
+	public int getNumber();
 	
 	public ServerInfo getServerInfo();
 	

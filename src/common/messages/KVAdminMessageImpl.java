@@ -12,11 +12,16 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	private Metadata metadata;
 	private Range range;
 	private ServerInfo serverinfo;
+
+
+
+	private int number;
     private byte[] msgBytes;
     private static final byte END = 13;
     private static final byte SEPARATOR = 29;
     private static final String type_identifier = "statustype";
     private static final String metadata_identifier = "metadata";
+    private static final String number_identifier = "number";
     private static final String range_identifier = "range";
     private static final String serverinfo_identifier = "serverinfo";
 	
@@ -59,6 +64,32 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         this.msgBytes = tmp;
 	}
 	
+	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, String number){
+        this.type = statustype;
+        this.number = Integer.parseInt(number);
+        
+        byte[] identifier0 = type_identifier.getBytes();
+        byte[] identifier1 = number_identifier.getBytes();
+        byte[] statusbytes = type.name().getBytes();
+        byte[] numberbytes = number.getBytes();
+        
+        byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + numberbytes.length + 1];
+        
+        System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+        tmp[identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+        tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+        
+        System.arraycopy(numberbytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , numberbytes.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + numberbytes.length] = END;
+        
+        this.msgBytes = tmp;
+	}
+	
 	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, Range range, ServerInfo serverinfo){
         this.type = statustype;
         this.range = range;
@@ -66,14 +97,14 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         
         byte[] identifier0 = type_identifier.getBytes();
         byte[] statusbytes = type.name().getBytes();
-        byte[] identifier1 = metadata_identifier.getBytes();
+        byte[] identifier1 = range_identifier.getBytes();
         byte[] rangebytes = range.getBytes();
         byte[] identifier2 = serverinfo_identifier.getBytes();
         byte[] serverinfobytes = serverinfo.getBytes();
         
         
         byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 +
-                              identifier1.length + 1 + rangebytes.length + 1
+                              identifier1.length + 1 + rangebytes.length + 1 + identifier2.length + 1
                               + serverinfobytes.length + 1];
         
         System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
@@ -89,10 +120,10 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + rangebytes.length] = SEPARATOR;
         
         System.arraycopy(identifier2, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + rangebytes.length + 1) , identifier2.length);
-        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + rangebytes.length + identifier2.length] = SEPARATOR;
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + rangebytes.length + 1 + identifier2.length] = SEPARATOR;
         
         System.arraycopy(serverinfobytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + rangebytes.length + 1 + identifier2.length + 1) , serverinfobytes.length);
-        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + rangebytes.length + identifier2.length + 1 + serverinfobytes.length] = END;
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + rangebytes.length + 1 + identifier2.length + 1 + serverinfobytes.length] = END;
         
         this.msgBytes = tmp;
 		
@@ -103,22 +134,29 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		this.msgBytes = bytes;
 		List<Byte> readelement =  new ArrayList<Byte>();
 		String identifier = null;
+		int binary_flag = 0;
 		for(int i=0;i<bytes.length;i++){
 			
 			if(bytes[i]==SEPARATOR || bytes[i] == END){
+				
 				byte[] readelementarr = new byte[readelement.size()];
 		        for (int j = 0; j < readelement.size(); j++){
 		        	readelementarr[j] = readelement.get(j);
 		        }
-		        if(i%2==0){
+		        
+		        if(binary_flag==0){
 		        	identifier = new String(readelementarr);
+//		        	System.out.println(identifier);
 		        	readelement.clear();
+		        	binary_flag = 1;
 		        }
+		        
 		        else{
 		        	
 		        	if(identifier.equals(type_identifier)){
 			           try{
-			        	   
+			        	   System.out.println(identifier + " " + i + " " + new String(readelementarr));
+			        	   System.out.println("---");
 			        	   this.type = KVAdminMessage.StatusType.valueOf(new String(readelementarr));
 			        	   readelement.clear();
 		                }
@@ -141,9 +179,15 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        		readelement.clear();
 		        	}
 		        	
+		        	else if(identifier.equals(number_identifier)){
+		        		this.number = Integer.parseInt(new String(readelementarr));
+		        		readelement.clear();
+		        	}
+		        	
 		        	else{
 		        		throw new IllegalArgumentException("Serialization error");
 		        	}
+		        	binary_flag = 0;
 				}
 		        
 			}
@@ -182,6 +226,15 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	public byte[] getBytes() {
 		return this.msgBytes;
 	}
+	
+	/**
+	 * @return the number
+	 */
+	public int getNumber() {
+		return number;
+	}
+	
+
 
 
 

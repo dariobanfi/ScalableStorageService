@@ -2,6 +2,7 @@ package app_kvClient;
 
 import common.messages.*;
 import common.objects.Metadata;
+import common.objects.Range;
 import common.objects.ServerInfo;
 
 public class Test {
@@ -19,16 +20,21 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, m);
+		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, "5");
 		
-		byte[] b1 = msg.getBytes();
+		System.out.println(msg.getNumber());
 		
-		System.out.println(new String(msg.getBytes()));
-		
-		KVAdminMessage msg1 = new KVAdminMessageImpl(b1);
-		
-		System.out.println(msg1.getStatusType());
-		System.out.println(new String(msg1.getMetadata().getBytes()));
+//		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, new Range("11", "22"), new ServerInfo("111",222));
+//		
+//		byte[] b1 = msg.getBytes();
+//		
+//		System.out.println(new String(msg.getBytes()));
+//		
+//		KVAdminMessage msg1 = new KVAdminMessageImpl(b1);
+//		
+//		System.out.println(msg1.getStatusType());
+//		System.out.println(msg1.getRange().getLower_limit());
+//		System.out.println(msg1.getServerInfo().toString());
 
 		
 //		byte[] b = m.getBytes();
@@ -37,7 +43,7 @@ public class Test {
 //
 //		
 //		Metadata m1 = new Metadata(b);
-//		
+		
 //		System.out.println(new String(m1.getBytes()));
 
 		
