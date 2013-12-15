@@ -20,9 +20,17 @@ public class Test {
 		m.add(s2);
 		m.add(s3);
 		
-		System.out.println(m.toString());
+		KVMessage k = new KVMessageImpl(KVMessage.StatusType.PUT, "lol", "xd");
+		System.out.println(new String(k.getBytes()));
 		
-		System.out.println(m.get("f08343938402ebb5110716c6e836f5a2").toString());
+		
+		Message k1 = new Message(Message.PermissionType.USER, k.getBytes());
+
+		System.out.println(new String(k1.getMsgBytes()));
+		
+//		System.out.println(m.toString());
+		
+//		System.out.println(m.get("f08343938402ebb5110716c6e836f5a2").toString());
 		
 //		KVAdminMessage msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.LOCK_WRITE, 5);
 		

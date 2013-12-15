@@ -1,5 +1,7 @@
 package common.messages;
 
+import common.objects.Metadata;
+
 public interface KVMessage {
 	
     public enum StatusType {
@@ -15,7 +17,8 @@ public interface KVMessage {
     	SERVER_STOPPED,         /* Server is stopped, no requests are processed */
     	SERVER_WRITE_LOCK,      /* Server locked for out, only get possible */
     	SERVER_NOT_RESPONSIBLE  /* Request not successful, server not responsible for key */
-}
+    }
+    
 
 	/**
 	 * @return the key that is associated with this message, 
@@ -35,8 +38,10 @@ public interface KVMessage {
 	 */
 	public StatusType getStatus();
 	
+	public Metadata getMetaData();
+
+	byte[] getBytes();
 	
-	public byte[] getBytes();
 	
 }
 

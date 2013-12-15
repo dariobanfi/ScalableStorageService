@@ -7,7 +7,7 @@ public class Range {
 	
 	private String lower_limit;
 	private String upper_limit;
-	private static final byte COLUMN = 58;
+	private static final byte MINUS = 45;
 	/**
 	 * @return the lower_limit
 	 */
@@ -24,7 +24,7 @@ public class Range {
         
         // Reading server address
 		while(i<bytes.length){
-            if(bytes[i]==COLUMN){
+            if(bytes[i]==MINUS){
                 i++;
                 break;
             }

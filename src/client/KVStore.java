@@ -7,7 +7,10 @@ import java.io.*;
 import org.apache.log4j.Logger;
 
 import common.messages.KVMessage;
+import common.messages.KVMessageImpl;
+import common.messages.Message;
 import common.objects.Metadata;
+import common.objects.ServerInfo;
 import communication.CommunicationModule;
 
 public class KVStore implements KVCommInterface {
@@ -33,11 +36,33 @@ public class KVStore implements KVCommInterface {
      */
     @Override
     public KVMessage put(String key, String value) throws Exception {
-            KVMessage request = new KVMessageImpl(KVMessage.StatusType.PUT, key, value);
-            connection.sendBytes(request.getBytes());
-            byte [] response = connection.receiveBytes();
-            KVMessage retval = new KVMessageImpl(response);
-            return retval;
+		byte[] kvmessage_payload = new KVMessageImpl(KVMessage.StatusType.PUT, key, value).getBytes();
+        Message request = new Message(Message.PermissionType.USER, kvmessage_payload);
+        connection.sendBytes(request.getMsgBytes());
+        byte [] response = connection.receiveBytes();
+        Message retval = new Message(response);
+        KVMessage retmsg = new KVMessageImpl(retval.getPayload());
+        
+        if(retmsg.getStatus().equals(KVMessage.StatusType.PUT_SUCCESS) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.PUT_ERROR) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.PUT_UPDATE) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_STOPPED) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_WRITE_LOCK)){
+        	
+        	return retmsg;
+        }
+        else if(retmsg.getStatus().equals(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE)){
+        	this.metadata = retmsg.getMetaData();
+        	ServerInfo serverinfo = this.metadata.get(key);
+        	disconnect();
+        	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
+        	return put(key, value);
+        	
+        }
+        else{
+        	logger.error("Unexpected return message");
+        	return new KVMessageImpl(KVMessage.StatusType.PUT_ERROR);
+        }
     }
 
     /* (non-Javadoc)
@@ -47,11 +72,32 @@ public class KVStore implements KVCommInterface {
      */
     @Override
     public KVMessage get(String key) throws Exception {
-            KVMessage request = new KVMessageImpl(KVMessage.StatusType.GET, key);
-            connection.sendBytes(request.getBytes());
-            byte [] response = connection.receiveBytes();
-            KVMessage retval = new KVMessageImpl(response);
-            return retval;
+		byte[] kvmessage_payload = new KVMessageImpl(KVMessage.StatusType.GET, key).getBytes();
+        Message request = new Message(Message.PermissionType.USER, kvmessage_payload);
+        connection.sendBytes(request.getMsgBytes());
+        byte [] response = connection.receiveBytes();
+        Message retval = new Message(response);
+        KVMessage retmsg = new KVMessageImpl(retval.getPayload());
+        
+        if(retmsg.getStatus().equals(KVMessage.StatusType.GET_SUCCESS) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.GET_ERROR) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_STOPPED) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_WRITE_LOCK)){
+        	
+        	return retmsg;
+        }
+        else if(retmsg.getStatus().equals(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE)){
+        	this.metadata = retmsg.getMetaData();
+        	ServerInfo serverinfo = this.metadata.get(key);
+        	disconnect();
+        	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
+        	return get(key);
+        	
+        }
+        else{
+        	logger.error("Unexpected return message");
+        	return new KVMessageImpl(KVMessage.StatusType.GET_ERROR);
+        }
     }
 
 

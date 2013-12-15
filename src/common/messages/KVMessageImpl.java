@@ -3,6 +3,8 @@ package common.messages;
 import java.util.ArrayList;
 import java.util.List;
 
+import common.objects.Metadata;
+
 /**
  * @author Dario
  * 
@@ -20,8 +22,13 @@ public class KVMessageImpl implements KVMessage {
         private String key;
         private String value;
         private byte[] msgBytes;
+		private Metadata metadata;
         private static final byte END = 13;
         private static final byte SEPARATOR = 29;
+        private static final String type_identifier = "statustype";
+        private static final String metadata_identifier = "metadata";
+        private static final String key_identifier = "key";
+        private static final String value_identifier = "value";
         
         
         /**
@@ -30,12 +37,15 @@ public class KVMessageImpl implements KVMessage {
          * Concatenates Statustype string bytes with endmessage
          */
         public KVMessageImpl(KVMessage.StatusType type){
-                this.type = type;
-                byte[] statusbytes = new String(type.name()).getBytes();
-                byte[] tmp = new byte[statusbytes.length + 1];
-                System.arraycopy(statusbytes, 0, tmp, 0, statusbytes.length);
-                tmp[statusbytes.length] = END;
-                this.msgBytes = tmp;
+            this.type = type;
+            byte[] identifier0 = type_identifier.getBytes();
+            byte[] statusbytes = new String(type.name()).getBytes();
+            byte[] tmp = new byte[identifier0.length + statusbytes.length + 2];
+            System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+            tmp[identifier0.length] = SEPARATOR;
+            System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+            tmp[identifier0.length + 1 + statusbytes.length] = END;
+            this.msgBytes = tmp;
         }
         
         /**
@@ -46,15 +56,35 @@ public class KVMessageImpl implements KVMessage {
          * Concatenates string of statustype + separator + key/value + endmessage
          */
         public KVMessageImpl(KVMessage.StatusType type, String elem){
-                this.type = type;
-                byte[] statusbytes = type.name().getBytes();
-                byte[] element = elem.getBytes();
-                byte[] tmp = new byte[statusbytes.length + element.length + 2];
-                System.arraycopy(statusbytes, 0, tmp, 0, statusbytes.length);
-                tmp[statusbytes.length] = SEPARATOR;
-                System.arraycopy(element, 0, tmp, (statusbytes.length + 1) , element.length);
-                tmp[statusbytes.length + 1 + element.length] = END;
-                this.msgBytes = tmp;
+            this.type = type;
+            
+            byte[] identifier0 = type_identifier.getBytes();
+            byte[] identifier1 = null;
+            if(type.equals(KVMessage.StatusType.GET))
+            	identifier1 = key_identifier.getBytes();
+            else if(type.equals(KVMessage.StatusType.GET_SUCCESS))
+            	identifier1 = value_identifier.getBytes();
+            else
+            	throw new IllegalArgumentException("Invalid type");
+            
+            byte[] statusbytes = type.name().getBytes();
+            byte[] elembytes = elem.getBytes();
+            
+            byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + elembytes.length + 1];
+            
+            System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+            tmp[identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+            tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+            
+            System.arraycopy(elembytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , elembytes.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + elembytes.length] = END;
+            
+            this.msgBytes = tmp;
         }
         
         /**
@@ -70,19 +100,68 @@ public class KVMessageImpl implements KVMessage {
         
         
         public KVMessageImpl(KVMessage.StatusType type, String key, String value){
-                this.type = type;
-                byte[] statusbytes = type.name().getBytes();
-                byte[] bkey = key.getBytes();
-                byte[] bvalue = value.getBytes();
-                byte[] tmp = new byte[statusbytes.length + bkey.length + bvalue.length + 3];
-                System.arraycopy(statusbytes, 0, tmp, 0, statusbytes.length);
-                tmp[statusbytes.length] = SEPARATOR;
-                System.arraycopy(bkey, 0, tmp, statusbytes.length + 1, bkey.length );
-                tmp[statusbytes.length + 1 + bkey.length] = SEPARATOR;
-                System.arraycopy(bvalue, 0, tmp, statusbytes.length + 1 + bkey.length + 1, bvalue.length);
-                tmp[statusbytes.length + 1 + bkey.length + 1 + bvalue.length] = END;
-                this.msgBytes = tmp;
+            this.type = type;
+            
+            byte[] identifier0 = type_identifier.getBytes();
+            byte[] identifier1 = key_identifier.getBytes();
+            byte[] identifier2 = value_identifier.getBytes();
+            byte[] statusbytes = type.name().getBytes();
+            byte[] keybytes = key.getBytes();
+            byte[] elembytes = value.getBytes();
+            
+            byte[] tmp = new byte[identifier0.length + 1 +
+                                  statusbytes.length + 1 +
+                                  identifier1.length + 1 +
+                                  keybytes.length + 1 +
+                                  identifier2.length + 1 +
+                                  elembytes.length + 1];
+            
+            System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+            tmp[identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+            tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+            
+            System.arraycopy(keybytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , keybytes.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length] = SEPARATOR;
+            
+            System.arraycopy(identifier2, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1) , identifier2.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1 + identifier2.length] = SEPARATOR;
+            
+            System.arraycopy(elembytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1 + identifier2.length + 1) , elembytes.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1 + identifier2.length + 1 + elembytes.length] = END;
+            
+            this.msgBytes = tmp;
         }
+        
+    	public KVMessageImpl(KVMessage.StatusType statustype, Metadata metadata){
+            this.type = statustype;
+            this.metadata = metadata;
+            
+            byte[] identifier0 = type_identifier.getBytes();
+            byte[] identifier1 = metadata_identifier.getBytes();
+            byte[] statusbytes = type.name().getBytes();
+            byte[] metadatabytes = metadata.getBytes();
+            
+            byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + metadatabytes.length + 1];
+            
+            System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+            tmp[identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+            tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+            
+            System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+            
+            System.arraycopy(metadatabytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , metadatabytes.length);
+            tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + metadatabytes.length] = END;
+            
+            this.msgBytes = tmp;
+    	}
         
         /**
          * @param bytes
@@ -93,91 +172,63 @@ public class KVMessageImpl implements KVMessage {
          */
         public KVMessageImpl(byte[] bytes) throws IllegalArgumentException{
                 
-                // Using ArrayList for avoid dealing with fixed array sizes
-                List<Byte> readstatus =  new ArrayList<Byte>();
-                List<Byte> readkey = new ArrayList<Byte>();
-                List<Byte> readmsg = new ArrayList<Byte>();        
-                int i=0;
-                boolean go_on = false;
-                
-                // Cycling through the whole message. If we find the separator we break out of the
-                // loop and save what we read into the status array
-                
-                while(i<bytes.length){
-                        if(bytes[i]==SEPARATOR){
-                                i++;
-                                go_on = true;
-                                break;
-                        }
-                        readstatus.add(bytes[i]);
-                        i++;
-                }
-                
-                byte[] tmpreadstatus = new byte[readstatus.size()];
-                byte[] tmpreadkey = null;
-                byte[] tmpreadmsg = null;
-                
-                // Putting the ArrayList into a array for String conversion
-            for (int j = 0; j < readstatus.size(); j++){
-                    tmpreadstatus[j] = readstatus.get(j);
-            }
-            String statustypestring = new String(tmpreadstatus);
-            
-            // Since we found a separator, it means we have to go_on reading the next element,
-            // in the same way as the upper while
-                if (go_on){
-                        go_on = false;
-                        while(i<bytes.length){
-                                if(bytes[i]==SEPARATOR){
-                                        i++;
-                                        go_on = true;
-                                        break;
-                                }
-                                readkey.add(bytes[i]);
-                                i++;
-                        }
-                        // Converting ArrayList into array
-                        tmpreadkey = new byte[readkey.size()];
-                    for (int j = 0; j < readkey.size(); j++){
-                            tmpreadkey[j] = readkey.get(j);
-                    }
-                }
-                
-                // Reading last part of message (if present)
-                if (go_on){
-                        while(i<bytes.length){
-                                readmsg.add(bytes[i]);
-                                i++;
-                        }
-                        tmpreadmsg = new byte[readmsg.size()];
-                    for (int j = 0; j < readmsg.size(); j++){
-                            tmpreadmsg[j] = readmsg.get(j);
-                    }
-                }
-                KVMessage.StatusType finalstatus = null;
-                
-                // Checking if the message belongs to the messages enum
-                try{
-                        finalstatus = KVMessage.StatusType.valueOf(statustypestring);
-                }
-                catch(IllegalArgumentException e){
-                        throw new IllegalArgumentException("Malformed request");
-                }
-                
-                this.type = finalstatus;
-                
-                
-                // Setting the values unmarshaled in the message 
-                
-                if(tmpreadmsg!=null && tmpreadkey!=null){
-                        this.value = new String(tmpreadmsg);
-                        this.key = new String(tmpreadkey);
-                }
-                else if(tmpreadkey!=null){
-                        this.key = new String(tmpreadkey);
-                        this.value = new String(tmpreadkey);
-                }
-
+    		this.msgBytes = bytes;
+    		List<Byte> readelement =  new ArrayList<Byte>();
+    		String identifier = null;
+    		int binary_flag = 0;
+    		for(int i=0;i<bytes.length;i++){
+    			
+    			if(bytes[i]==SEPARATOR || bytes[i] == END){
+    				
+    				byte[] readelementarr = new byte[readelement.size()];
+    		        for (int j = 0; j < readelement.size(); j++){
+    		        	readelementarr[j] = readelement.get(j);
+    		        }
+    		        
+    		        if(binary_flag==0){
+    		        	identifier = new String(readelementarr);
+    		        	readelement.clear();
+    		        	binary_flag = 1;
+    		        }
+    		        
+    		        else{
+    		        	
+    		        	if(identifier.equals(type_identifier)){
+    			           try{
+    			        	   this.type = KVMessage.StatusType.valueOf(new String(readelementarr));
+    			        	   readelement.clear();
+    		                }
+    		                catch(IllegalArgumentException e){
+    		                        throw new IllegalArgumentException("Malformed request");
+    		                }
+    		        	}
+    		        	else if(identifier.equals(metadata_identifier)){
+    		        		this.metadata = new Metadata(readelementarr);
+    		        		readelement.clear();
+    		        	}
+    		        	
+    		        	else if(identifier.equals(key_identifier)){
+    		        		this.key = new String(readelementarr);
+    		        		readelement.clear();
+    		        	}
+    		        	
+    		        	else if(identifier.equals(value_identifier)){
+    		        		this.value = new String(readelementarr);
+    		        		readelement.clear();
+    		        	}
+    		        	
+    		        	else{
+    		        		throw new IllegalArgumentException("Serialization error");
+    		        	}
+    		        	
+    		        	binary_flag = 0;
+    				}
+    		        
+    			}
+    			else{
+    				readelement.add(bytes[i]);
+    			}
+    		}
 
         }
 
@@ -200,6 +251,11 @@ public class KVMessageImpl implements KVMessage {
         public byte[] getBytes() {
                 return msgBytes;
         }
+
+		@Override
+		public Metadata getMetaData() {
+			return this.metadata;
+		}
         
 
 }
