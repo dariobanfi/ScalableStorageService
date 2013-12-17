@@ -130,4 +130,8 @@ public class CommunicationModule {
 		}
 	}
 	
+	public String toString(){
+		return this.address + ":" + this.port;
+	}
+	
 }

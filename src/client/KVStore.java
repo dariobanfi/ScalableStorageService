@@ -35,7 +35,7 @@ public class KVStore implements KVCommInterface {
      * 
      */
     @Override
-    public KVMessage put(String key, String value) throws Exception {
+    public KVMessage put(String key, String value) throws IOException {
 		byte[] kvmessage_payload = new KVMessageImpl(KVMessage.StatusType.PUT, key, value).getBytes();
         Message request = new Message(Message.PermissionType.USER, kvmessage_payload);
         connection.sendBytes(request.getBytes());

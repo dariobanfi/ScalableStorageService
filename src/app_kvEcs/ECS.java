@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import common.objects.Metadata;
 import common.objects.ServerInfo;
 import logger.LogSetup;
 
@@ -17,7 +18,7 @@ import logger.LogSetup;
 public class ECS extends Thread{
 	static List <ServerInfo> serverPool = new ArrayList<ServerInfo>();
 	static List <ServerInfo> startedServers = new ArrayList<ServerInfo>();
-	
+	private Metadata metadata;
 	private int port;
 	private ServerSocket serverSocket;
 	private boolean running;
@@ -35,7 +36,7 @@ public class ECS extends Thread{
 		            try {     
 		                Socket client = serverSocket.accept();                
 		                ECSClientConnection connection = 
-		                        new ECSClientConnection(client, serverPool, startedServers);
+		                        new ECSClientConnection(client, metadata, serverPool, startedServers);
 		                new Thread(connection).start();
 		                
 		                logger.info("Connected to " 

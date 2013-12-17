@@ -20,7 +20,7 @@ public interface KVAdminMessage {
     	ADD_NODE,
     	REMOVE_NODE,
     	SUCCESS,
-    	FAILURE
+    	CLEANUP
     }
 
 	/**

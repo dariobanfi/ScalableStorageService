@@ -5,13 +5,9 @@ import java.net.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import logger.LogSetup;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import client.KVCommInterface;
 import common.objects.Metadata;
 
 public class KVServer extends Thread  {
@@ -19,16 +15,11 @@ public class KVServer extends Thread  {
 	private static Logger logger = Logger.getRootLogger();
 	private int port;
     private ServerSocket serverSocket;
-    private boolean running;
+	private boolean running;
     private Map<String, String> database;
-    
-	public Map<String, String> getDatabase() {
-		return database;
-	}
-
-	public void setDatabase(Map<String, String> database) {
-		this.database = database;
-	}
+    private boolean acceptingRequests;
+    private boolean writeLock;
+	private Metadata metadata;
 
 	/**
 	 * Start KV Server at given port
@@ -36,7 +27,8 @@ public class KVServer extends Thread  {
 	 */
 	public KVServer(int port) {
 		this.port = port;
-		database = Collections.synchronizedMap(new HashMap<String,String>());
+		this.database = Collections.synchronizedMap(new HashMap<String,String>());
+		this.acceptingRequests = false;
 	}
 	
     /**
@@ -47,7 +39,8 @@ public class KVServer extends Thread  {
     	try {
             serverSocket = new ServerSocket(port);
             logger.info("Server listening on port: " 
-            		+ serverSocket.getLocalPort());    
+            		+ serverSocket.getLocalPort());
+            this.metadata = meta;
             return true;
         
         } catch (IOException e) {
@@ -59,9 +52,45 @@ public class KVServer extends Thread  {
         }
     }
 	
-    private boolean isRunning() {
+    /**
+	 * @return the metadata
+	 */
+	public Metadata getMetadata() {
+		return metadata;
+	}
+
+	/**
+	 * @param metadata the metadata to set
+	 */
+	public void setMetadata(Metadata metadata) {
+		this.metadata = metadata;
+	}
+	
+    /**
+	 * @return the serverSocket
+	 */
+	public ServerSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	private boolean isRunning() {
         return this.running;
     }
+	
+    /**
+	 * @return the writeLock
+	 */
+	public boolean isWriteLock() {
+		return writeLock;
+	}
+
+	/**
+	 * @param writeLock the writeLock to set
+	 */
+	public void setWriteLock(boolean writeLock) {
+		this.writeLock = writeLock;
+	}
+
     
     /**
      * Starts the server
@@ -72,7 +101,6 @@ public class KVServer extends Thread  {
         if(serverSocket != null) {
         	while(isRunning()){
 	            try {
-	            	
 	                Socket client = serverSocket.accept();                
 	                ClientConnection connection = 
 	                		new ClientConnection(client, this);
@@ -90,10 +118,18 @@ public class KVServer extends Thread  {
         logger.info("Server stopped.");
     }
     
+    public void setacceptingRequests(boolean val){
+    	this.acceptingRequests = val;
+    }
+    
+    public boolean getacceptingRequests(){
+    	return this.acceptingRequests;
+    }
+    
     /**
      * Stops the server insofar that it won't listen at the given port any more.
      */
-    public void stopServer(){
+    public void shutDown(){
         running = false;
         try {
 			serverSocket.close();
@@ -104,13 +140,17 @@ public class KVServer extends Thread  {
         System.exit(0);
     }
     
+	public Map<String, String> getDatabase() {
+		return database;
+	}
+    
     /**
      * Main entry point for the echo server application. 
      * @param args contains the port number at args[0].
      */
     public static void main(String[] args) {
     	try {
-			new LogSetup("logs/server.log", Level.ALL);
+			new LogSetup("logs/server/server.log", Level.ALL);
 			if(args.length != 1) {
 				System.out.println("Error! Invalid number of arguments!");
 				System.out.println("Usage: Server <port>!");

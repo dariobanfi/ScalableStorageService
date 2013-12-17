@@ -1,19 +1,32 @@
 package app_kvClient;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import common.messages.*;
 import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
+import common.utilis.Hash;
 
 public class Test {
 
 	public static void main(String[] args) {
 		
-		KVAdminMessage m = new KVAdminMessageImpl(KVAdminMessage.StatusType.START);
-		
-		for(byte b: m.getBytes())
-			System.out.print(b + " ");
 
+		Map<String,String> h = new HashMap<String,String>(); 
+		
+		h.put("000", "a");
+		h.put("111", "b");
+		h.put("222", "c");
+		h.put("ccc", "d");
+		
+		for (Map.Entry<String, String> entry : h.entrySet()) {
+			if(entry.getKey().compareTo("001")>0 && entry.getKey().compareTo("ccc")<=0 ){
+				System.out.print(entry.getKey());
+		    	System.out.println(entry.getValue());
+			}
+		}
 //		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);
 //		ServerInfo s1 = new ServerInfo("127.0.0.1", 50001);
 //		ServerInfo s2 = new ServerInfo("127.0.0.1", 50002);
@@ -24,6 +37,10 @@ public class Test {
 //		m.add(s1);
 //		m.add(s2);
 //		m.add(s3);
+//		
+//		
+//		System.out.println(m.toString());
+//		System.out.println(m.getPredecessor("b98109598267087dfc364fae4cf24578").toString());
 //		
 //		KVMessage k = new KVMessageImpl(KVMessage.StatusType.PUT, "lol", "xd");
 //		System.out.println(new String(k.getBytes()));

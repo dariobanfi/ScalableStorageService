@@ -96,6 +96,15 @@ public class ECSServerKVLibrary  {
         return retmsg;
 	}
 	
+	public KVAdminMessage cleanup(Range range) throws IOException {
+		KVAdminMessage admin_msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP);
+		Message msg = new Message(Message.PermissionType.ADMIN, admin_msg.getBytes());
+		connection.sendBytes(msg.getBytes());
+        byte [] response = connection.receiveBytes();
+        KVAdminMessage retmsg = new KVAdminMessageImpl(response);
+        return retmsg;
+	}
+	
 	public void disconnect() throws IOException{
 		connection.closeConnection();
 	}

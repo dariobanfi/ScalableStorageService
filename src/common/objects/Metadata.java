@@ -1,9 +1,7 @@
 package common.objects;
 
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import common.utilis.Hash;
 
 public class Metadata {
 
@@ -14,6 +12,12 @@ public class Metadata {
 		this.metadata = new TreeMap<String ,ServerInfo>();
 	}
 	
+	/**
+	 * Unserialization constructor, takes a byte and creates
+	 * a TreeMap sctructure with the hash as key, and the serverinfo
+	 * as element
+	 * @param bytes
+	 */
 	public Metadata(byte[] bytes){
 		this.metadata = new TreeMap<String,ServerInfo>();
 		List<Byte> readserverinfobytes =  new ArrayList<Byte>();
@@ -34,47 +38,22 @@ public class Metadata {
 	}
 	
 	public void add(ServerInfo serverinfo){
-		String string_serverinfo = serverinfo.getAddress() + ":" + serverinfo.getPort();
-        MessageDigest messageDigest = null;
-		try {
-			messageDigest = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-        messageDigest.reset();
-        messageDigest.update(string_serverinfo.getBytes(Charset.forName("UTF8")));
-        final byte[] resultByte = messageDigest.digest();
-        
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < resultByte.length; i++) {
-          sb.append(Integer.toString((resultByte[i] & 0xff) + 0x100, 16).substring(1));
-        }
-		String key = sb.toString();
+		String key = Hash.md5(serverinfo.toString());
 		this.metadata.put(key, serverinfo);
 	}
 	
 	public void remove(ServerInfo serverinfo){
-		String string_serverinfo = serverinfo.getAddress() + ":" + serverinfo.getPort();
-        MessageDigest messageDigest = null;
-		try {
-			messageDigest = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-        messageDigest.reset();
-        messageDigest.update(string_serverinfo.getBytes(Charset.forName("UTF8")));
-        final byte[] resultByte = messageDigest.digest();
-        
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < resultByte.length; i++) {
-          sb.append(Integer.toString((resultByte[i] & 0xff) + 0x100, 16).substring(1));
-        }
-		String key = sb.toString();
+		String key = Hash.md5(serverinfo.toString());
+		this.metadata.put(key, serverinfo);
 		this.metadata.remove(key);
 		
 	}
 	
-	
+	/**
+	 * Returns the serverinfo responsible for handing the key
+	 * @param key
+	 * @return ServerInfo
+	 */
 	 public ServerInfo get(String key) {
 		   if (metadata.isEmpty()) {
 		     return null;
@@ -86,7 +65,26 @@ public class Metadata {
 		   return metadata.get(key);
 		 }
 	 
+	 /**
+	  * Returns the predecessor server in the ring topology
+	  * @param key
+	  * @return ServerInfo
+	  */
+	 public ServerInfo getPredecessor(String key) {
+		   if (metadata.isEmpty()) {
+		     return null;
+		   }
+		   if (!metadata.containsKey(key)) {
+			     SortedMap<String, ServerInfo> headMap = metadata.headMap(key);
+			     key = headMap.isEmpty() ? metadata.lastKey() : headMap.lastKey();
+		   }
+		   return metadata.get(key);
+		 }
 	 
+	 /**
+	  * Serialization function for sending over the network
+	  * @return a byte representation array
+	  */
 		public byte[] getBytes(){
 			List<Byte> metadatalist =  new ArrayList<Byte>();
 			for(Map.Entry<String,ServerInfo> entry : metadata.entrySet()) {
@@ -106,6 +104,10 @@ public class Metadata {
 	        
 	        return returnbytes;
 		}
+		
+		/**
+		 * toString representation of the metadata tree, useful for debugging
+		 */
 		
 		public String toString(){
 			String retvalue = "";
