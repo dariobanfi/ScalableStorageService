@@ -38,10 +38,9 @@ public class KVStore implements KVCommInterface {
     public KVMessage put(String key, String value) throws Exception {
 		byte[] kvmessage_payload = new KVMessageImpl(KVMessage.StatusType.PUT, key, value).getBytes();
         Message request = new Message(Message.PermissionType.USER, kvmessage_payload);
-        connection.sendBytes(request.getMsgBytes());
+        connection.sendBytes(request.getBytes());
         byte [] response = connection.receiveBytes();
-        Message retval = new Message(response);
-        KVMessage retmsg = new KVMessageImpl(retval.getPayload());
+        KVMessage retmsg = new KVMessageImpl(response);
         
         if(retmsg.getStatus().equals(KVMessage.StatusType.PUT_SUCCESS) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.PUT_ERROR) ||
@@ -56,6 +55,7 @@ public class KVStore implements KVCommInterface {
         	ServerInfo serverinfo = this.metadata.get(key);
         	disconnect();
         	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
+        	logger.info("[PUT] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
         	return put(key, value);
         	
         }
@@ -74,10 +74,9 @@ public class KVStore implements KVCommInterface {
     public KVMessage get(String key) throws Exception {
 		byte[] kvmessage_payload = new KVMessageImpl(KVMessage.StatusType.GET, key).getBytes();
         Message request = new Message(Message.PermissionType.USER, kvmessage_payload);
-        connection.sendBytes(request.getMsgBytes());
+        connection.sendBytes(request.getBytes());
         byte [] response = connection.receiveBytes();
-        Message retval = new Message(response);
-        KVMessage retmsg = new KVMessageImpl(retval.getPayload());
+        KVMessage retmsg = new KVMessageImpl(response);
         
         if(retmsg.getStatus().equals(KVMessage.StatusType.GET_SUCCESS) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.GET_ERROR) ||
@@ -91,6 +90,7 @@ public class KVStore implements KVCommInterface {
         	ServerInfo serverinfo = this.metadata.get(key);
         	disconnect();
         	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
+        	logger.info("[GET] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
         	return get(key);
         	
         }

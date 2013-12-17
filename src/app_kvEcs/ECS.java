@@ -1,9 +1,10 @@
 package app_kvEcs;
 
 import java.io.*;
-import java.net.*;
+import java.net.BindException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Level;
@@ -13,124 +14,107 @@ import common.objects.ServerInfo;
 import logger.LogSetup;
 
 
-public class ECS {
+public class ECS extends Thread{
+	static List <ServerInfo> serverPool = new ArrayList<ServerInfo>();
+	static List <ServerInfo> startedServers = new ArrayList<ServerInfo>();
 	
-	static List <ServerInfo> iParameters = new ArrayList<ServerInfo>();
-	
+	private int port;
+	private ServerSocket serverSocket;
+	private boolean running;
 	private static Logger logger = Logger.getRootLogger();
+	
+	
+    public ECS(int port) {
+        this.port = port;
+    }
+
+	public void run() {
+		running = initializeServer();
+		if(serverSocket != null) {
+		        while(isRunning()){
+		            try {     
+		                Socket client = serverSocket.accept();                
+		                ECSClientConnection connection = 
+		                        new ECSClientConnection(client, serverPool, startedServers);
+		                new Thread(connection).start();
+		                
+		                logger.info("Connected to " 
+		                                + client.getInetAddress().getHostName() 
+		                                +  " on port " + client.getPort());
+		            } catch (IOException e) {
+		                    logger.error("Error! " +
+		                                    "Unable to establish connection. \n", e);
+		            }
+		        }
+		}
+		logger.info("Server stopped.");
+	}
+	
+	private boolean isRunning() {
+		return this.running;
+	}
+	
+	public void stopServer(){
+		running = false;
+		try {
+			serverSocket.close();
+	    } catch (IOException e) {
+	    	logger.error("Error! " +
+	    		"Unable to close socket on port: " + port, e);
+	    	}
+	}
+	
+    private boolean initializeServer() {
+        logger.info("Starting Server");
+        try {
+        serverSocket = new ServerSocket(port);
+        logger.info("Server listening on port: " 
+                        + serverSocket.getLocalPort());    
+        return true;
     
-    /**
-     * Main entry point for the echo server application. 
-     * @param args contains the port number at args[0].
-     */
-
-	public void initService(int numberOfNodes) {
-		String host = null;
-		String port = null;
-		// TODO Auto-generated method stub
-		for(int x = 0; x < numberOfNodes; x++) {
-			host = iParameters.get(x).getAddress();
-			port = Integer.toString(iParameters.get(x).getPort());
-			ProcessBuilder pb = new ProcessBuilder("nohup", "ssh", "-n", host, "java -jar", "ms3-server.jar", port, "&");
-			pb.redirectErrorStream(); // redirect stderr to stdout
-			try {
-				Process process = pb.start();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	      }
-		//for(int x = 0; x < numberOfNodes; x++) {
-		//	
-	    //  }
+        } catch (IOException e) {
+            logger.error("Error! Cannot open server socket:");
+        if(e instanceof BindException){
+                logger.error("Port " + port + " is already bound!");
+        }
+        
+        return false;
+    	}
+    }
 	
-	}
-
-
-	public void start() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	public void stop() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	public void shutDown() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	public void addNode() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	public void removeNode() {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public static void main(String[] args) {
-    	try {
-			new LogSetup("logs/server.log", Level.ALL);
-			if(args.length != 1) {
-				System.out.println("Error! Invalid number of arguments!");
-			} else {
-				try {
-					File file = new File(args[0]);
-					FileReader fileReader = new FileReader(file);
-					BufferedReader bufferedReader = new BufferedReader(fileReader);
-					StringBuffer stringBuffer = new StringBuffer();
-					String line;
-					while ((line = bufferedReader.readLine()) != null) {
-						String[] tokens = line.split("\\s+");
-						ServerInfo temp = new ServerInfo(tokens[1], Integer.parseInt(tokens[2]));
-						iParameters.add(temp);
-					}
-					fileReader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+	public static void parseConfig(String location){
+		try {
+			File file = new File(location);
+			FileReader fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				String[] tokens = line.split("\\s+");
+				ServerInfo temp = new ServerInfo(tokens[1], Integer.parseInt(tokens[2]));
+				serverPool.add(temp);
 			}
-			
-			 /**
-		     * Sorry .... this is just for testing 
-		     * Have to delete 
-		     */
-			
-			//<------------------------------------------------>
-			String host = null;
-			String port = null;
-			// TODO Auto-generated method stub
-			for(int x = 0; x < 4; x++) {
-				host = iParameters.get(x).getAddress();
-				port = Integer.toString(iParameters.get(x).getPort());
-				ProcessBuilder pb = new ProcessBuilder("nohup", "ssh", "-n", host, "java -jar", "/tmp/ms3-server.jar", port, "&");
-				
-				pb.redirectErrorStream(); // redirect stderr to stdout
-				try {
-					Process process = pb.start();
-					System.out.println(host+" started on "+port);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		      }
-			//<------------------------------------------------>
+			fileReader.close();
 		} catch (IOException e) {
-			System.out.println("Error! Unable to initialize logger!");
 			e.printStackTrace();
-			System.exit(1);
-		} catch (NumberFormatException nfe) {
-			System.out.println("Error! Invalid argument <port>! Not a number!");
-			System.out.println("Usage: Server <port>!");
-			System.exit(1);
 		}
 	}
+	
+
+	public static void main(String[] args) {
+		int default_port = 4000;
+		try {
+			new LogSetup("logs/ecs/server.log", Level.ALL);
+		} catch (IOException e1) {
+			logger.error("Could not initialize logger");
+		}
+		
+		if(args.length != 1) {
+			logger.error("Eoor, invalid number of arguments!");
+		} else {
+			parseConfig(args[0]);
+			new ECS(default_port).start();
+		}
+		
+    }
+
 }

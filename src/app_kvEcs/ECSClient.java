@@ -2,7 +2,9 @@ package app_kvEcs;
 
 import java.io.*;
 import java.net.*;
+
 import logger.LogSetup;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -20,7 +22,7 @@ public class ECSClient{
         private static final String PROMPT = "ECSClient> ";
         private BufferedReader stdin;
         private boolean stop = false;
-        private ECSCommunicationLibrary ecs;
+        private ECSClientServerLibrary ecs;
         private String serverAddress;
         private int serverPort;
         
@@ -58,11 +60,20 @@ public class ECSClient{
                         System.out.println(PROMPT + "Application exit!");
                 
                 } else if (tokens[0].equals("connect")){
-                        if(tokens.length == 3) {
+                	
+                		if (tokens.length == 1){
+                            try {
+								ecs = new ECSClientServerLibrary("127.0.0.1",4000);
+	                            System.out.println("Connected to ECSServer");  
+							} catch (IOException e) {
+								System.out.println("Cannot connect to ECSServer");
+							}       			
+                		}
+                		else if(tokens.length == 3) {
                                 try{
                                         serverAddress = tokens[1];
                                         serverPort = Integer.parseInt(tokens[2]);
-                                        ecs = new ECSCommunicationLibrary(serverAddress,serverPort);
+                                        ecs = new ECSClientServerLibrary(serverAddress,serverPort);
                                         System.out.println("Connected to ECSServer");
                                 } catch(NumberFormatException nfe) {
                                         printError("No valid address. Port must be a number!");

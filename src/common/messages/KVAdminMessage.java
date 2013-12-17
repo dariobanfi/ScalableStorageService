@@ -18,7 +18,9 @@ public interface KVAdminMessage {
     	MOVE_DATA,  		
     	UPDATE,
     	ADD_NODE,
-    	REMOVE_NODE
+    	REMOVE_NODE,
+    	SUCCESS,
+    	FAILURE
     }
 
 	/**

@@ -178,7 +178,10 @@ public class KVMessageImpl implements KVMessage {
     		int binary_flag = 0;
     		for(int i=0;i<bytes.length;i++){
     			
-    			if(bytes[i]==SEPARATOR || bytes[i] == END){
+    			if(bytes[i]==SEPARATOR ||  i == bytes.length-1){
+    				
+    				if(i == bytes.length-1)
+    					readelement.add(bytes[i]);
     				
     				byte[] readelementarr = new byte[readelement.size()];
     		        for (int j = 0; j < readelement.size(); j++){

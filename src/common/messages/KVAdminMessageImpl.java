@@ -130,14 +130,17 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	}
 	
 	
-	public KVAdminMessageImpl(byte[] bytes){
+	public KVAdminMessageImpl(byte[] bytes) throws IllegalArgumentException{
 		this.msgBytes = bytes;
 		List<Byte> readelement =  new ArrayList<Byte>();
 		String identifier = null;
 		int binary_flag = 0;
 		for(int i=0;i<bytes.length;i++){
 			
-			if(bytes[i]==SEPARATOR || bytes[i] == END){
+			if(bytes[i]==SEPARATOR || i == bytes.length-1){
+				
+				if(i == bytes.length-1)
+					readelement.add(bytes[i]);
 				
 				byte[] readelementarr = new byte[readelement.size()];
 		        for (int j = 0; j < readelement.size(); j++){
@@ -146,7 +149,6 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        
 		        if(binary_flag==0){
 		        	identifier = new String(readelementarr);
-//		        	System.out.println(identifier);
 		        	readelement.clear();
 		        	binary_flag = 1;
 		        }

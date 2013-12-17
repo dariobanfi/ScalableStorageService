@@ -8,25 +8,30 @@ import common.objects.ServerInfo;
 public class Test {
 
 	public static void main(String[] args) {
+		
+		KVAdminMessage m = new KVAdminMessageImpl(KVAdminMessage.StatusType.START);
+		
+		for(byte b: m.getBytes())
+			System.out.print(b + " ");
 
-		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);
-		ServerInfo s1 = new ServerInfo("127.0.0.1", 50001);
-		ServerInfo s2 = new ServerInfo("127.0.0.1", 50002);
-		ServerInfo s3 = new ServerInfo("127.0.0.1", 50003);
-		
-		Metadata m = new Metadata();
-		m.add(s0);
-		m.add(s1);
-		m.add(s2);
-		m.add(s3);
-		
-		KVMessage k = new KVMessageImpl(KVMessage.StatusType.PUT, "lol", "xd");
-		System.out.println(new String(k.getBytes()));
-		
-		
-		Message k1 = new Message(Message.PermissionType.USER, k.getBytes());
-
-		System.out.println(new String(k1.getMsgBytes()));
+//		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);
+//		ServerInfo s1 = new ServerInfo("127.0.0.1", 50001);
+//		ServerInfo s2 = new ServerInfo("127.0.0.1", 50002);
+//		ServerInfo s3 = new ServerInfo("127.0.0.1", 50003);
+//		
+//		Metadata m = new Metadata();
+//		m.add(s0);
+//		m.add(s1);
+//		m.add(s2);
+//		m.add(s3);
+//		
+//		KVMessage k = new KVMessageImpl(KVMessage.StatusType.PUT, "lol", "xd");
+//		System.out.println(new String(k.getBytes()));
+//		
+//		
+//		Message k1 = new Message(Message.PermissionType.USER, k.getBytes());
+//
+//		System.out.println(new String(k1.getMsgBytes()));
 		
 //		System.out.println(m.toString());
 		

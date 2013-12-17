@@ -32,6 +32,13 @@ public class CommunicationModule {
 		this.address = address;
 		this.port = port;
 	}
+	
+	public CommunicationModule(Socket socket) throws IOException{
+		clientSocket = socket;
+		setRunning(true);
+		output = clientSocket.getOutputStream();
+		input = clientSocket.getInputStream();
+	}
 
 	public void connect() throws UnknownHostException, IOException {
 			clientSocket = new Socket(this.address, this.port);

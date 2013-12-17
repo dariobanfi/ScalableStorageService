@@ -80,7 +80,7 @@ public class Message {
 	/**
 	 * @return the msgBytes
 	 */
-	public byte[] getMsgBytes() {
+	public byte[] getBytes() {
 		return msgBytes;
 	}
 
