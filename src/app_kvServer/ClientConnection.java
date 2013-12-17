@@ -2,7 +2,6 @@ package app_kvServer;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Map;
 
 import org.apache.log4j.*;

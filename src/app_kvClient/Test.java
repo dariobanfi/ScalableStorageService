@@ -14,19 +14,23 @@ public class Test {
 	public static void main(String[] args) {
 		
 
-		Map<String,String> h = new HashMap<String,String>(); 
+		Range range = new Range("aaaa" , "ffff");
+		KVAdminMessage k = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP, range);
 		
-		h.put("000", "a");
-		h.put("111", "b");
-		h.put("222", "c");
-		h.put("ccc", "d");
-		
-		for (Map.Entry<String, String> entry : h.entrySet()) {
-			if(entry.getKey().compareTo("001")>0 && entry.getKey().compareTo("ccc")<=0 ){
-				System.out.print(entry.getKey());
-		    	System.out.println(entry.getValue());
-			}
-		}
+		System.out.println(new String(k.getBytes()));
+//		Map<String,String> h = new HashMap<String,String>(); 
+//		
+//		h.put("000", "a");
+//		h.put("111", "b");
+//		h.put("222", "c");
+//		h.put("ccc", "d");
+//		
+//		for (Map.Entry<String, String> entry : h.entrySet()) {
+//			if(entry.getKey().compareTo("001")>0 && entry.getKey().compareTo("ccc")<=0 ){
+//				System.out.print(entry.getKey());
+//		    	System.out.println(entry.getValue());
+//			}
+//		}
 //		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);
 //		ServerInfo s1 = new ServerInfo("127.0.0.1", 50001);
 //		ServerInfo s2 = new ServerInfo("127.0.0.1", 50002);

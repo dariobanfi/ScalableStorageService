@@ -97,7 +97,7 @@ public class ECSServerKVLibrary  {
 	}
 	
 	public KVAdminMessage cleanup(Range range) throws IOException {
-		KVAdminMessage admin_msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP);
+		KVAdminMessage admin_msg = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP, range);
 		Message msg = new Message(Message.PermissionType.ADMIN, admin_msg.getBytes());
 		connection.sendBytes(msg.getBytes());
         byte [] response = connection.receiveBytes();

@@ -90,6 +90,32 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         this.msgBytes = tmp;
 	}
 	
+	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, Range range){
+        this.type = statustype;
+        this.range = range;
+        
+        byte[] identifier0 = type_identifier.getBytes();
+        byte[] identifier1 = range_identifier.getBytes();
+        byte[] statusbytes = type.name().getBytes();
+        byte[] rangebytes = range.getBytes();
+        
+        byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + rangebytes.length + 1];
+        
+        System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+        tmp[identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+        tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+        
+        System.arraycopy(rangebytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , rangebytes.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + rangebytes.length] = END;
+        
+        this.msgBytes = tmp;
+	}
+	
 	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, Range range, ServerInfo serverinfo){
         this.type = statustype;
         this.range = range;
