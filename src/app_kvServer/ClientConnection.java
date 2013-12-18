@@ -60,8 +60,10 @@ public class ClientConnection implements Runnable {
 					    	processKVMessage(latestMsg);
 					    }
 				    }
+				    else
+				    	break;
 				} catch (IOException ioe) {
-					logger.error("Error! Connection lost!");
+					logger.error("Error! Connection lost!" + ioe.getMessage());
 					isOpen = false;
 				}				
 			}
@@ -89,8 +91,10 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	private void processKVAdminMessage(Message message){
+		logger.info(message.getPermission());
 		KVAdminMessage msg = new KVAdminMessageImpl(message.getPayload());
 		if(msg.getStatusType().equals(KVAdminMessage.StatusType.START)){
+			logger.info("Received START message");
 			start();
 		}
 
@@ -132,6 +136,8 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	private void processKVMessage(Message message){
+		logger.debug(new String(message.getBytes()));
+		
 		KVMessage msg = new KVMessageImpl(message.getPayload());
 		KVMessage response;
 		/**
@@ -211,10 +217,10 @@ public class ClientConnection implements Runnable {
 		
 		byte[] msgBytes = connection.receiveBytes();
 		Message retvalue;
-		try{
+		try{			
 			retvalue = new Message(msgBytes);
-			if(retvalue.getPermission() == null)
-				throw new IOException("Malformed message");
+			if(retvalue.getPermission() == null || retvalue.getPayload()==null)
+				throw new IllegalArgumentException("Malformed message");
 		}
 		catch(IllegalArgumentException e){
 			logger.error(e.getMessage());
@@ -224,34 +230,53 @@ public class ClientConnection implements Runnable {
 		return retvalue;
     }
 	
-	
+	private void sendAck(){
+		try {
+			connection.sendBytes(new KVAdminMessageImpl(KVAdminMessage.StatusType.SUCCESS).getBytes());
+		} catch (IOException e) {
+			logger.error("Unable to send ACK back");
+		}
+	}
 	// ADMIN OPERATIONS, CALLED BY ECS
 	// ---------------------------------------------------
 	
+	// Initializing KVServer with metadata and sencind back a acknowledgement
 	public void initKVServer(Metadata metadata){
 		server.setMetadata(metadata);
+		sendAck();
 	}
 	
+	// Starting and sending back a acknowledgement
 	public void start(){
 		server.setacceptingRequests(true);
+		sendAck();
 	}
 	
+	// Stopping server and sending back a acknowledgement
 	public void stop(){
 		server.setacceptingRequests(false);
+		sendAck();
 	}
 	
+	// Shuttding down server and sending back a acknowledgement
 	public void shutDown(){
 		server.shutDown();
+		sendAck();
 	}
 	
+	// Locking write on server and sending back a acknowledgement
 	public void lockWrite(){
 		server.setWriteLock(true);
+		sendAck();
 	}
 	
+	// Unlocking write on server and sending back a acknowledgement
 	public void unlockWrite(){
 		server.setWriteLock(false);
+		sendAck();
 	}
 	
+	// Moving data on server and sending back a acknowledgement
 	public void moveData(Range range, ServerInfo server){
 		for (Map.Entry<String, String> entry : this.server.getDatabase().entrySet()) {
 			String hashkey = Hash.md5(entry.getKey());
@@ -267,13 +292,17 @@ public class ClientConnection implements Runnable {
 				logger.debug("Moving " + entry.getKey() + " " + hashkey);
 			}
 		}
+		sendAck();
 		
 	}
 	
+	// Updating metadata and sending back a acknowledgement
 	public void update(Metadata metadata){
 		server.setMetadata(metadata);
+		sendAck();
 	}
 	
+	// Cleaning up elements not under responsibility and sending back a acknowledgement
 	public void cleanup(Range range){
 		for (Map.Entry<String, String> entry : this.server.getDatabase().entrySet()) {
 			String hashkey = Hash.md5(entry.getKey());
@@ -282,6 +311,7 @@ public class ClientConnection implements Runnable {
 				logger.debug("Clearning " + entry.getKey() + " " + hashkey);
 			}
 		}
+		sendAck();
 	}
 	
 	
@@ -307,20 +337,33 @@ public class ClientConnection implements Runnable {
     	 */
     	
     	String hashedkey = Hash.md5(key);
+    	logger.debug("looking for " + hashedkey + "in " + server.getMetadata().toString());
+    	
     	ServerInfo responsible_server = server.getMetadata().get(hashedkey);
-    	if(!responsible_server.getAddress().equals(server.getServerSocket().getInetAddress().toString()) || 
-    			!(responsible_server.getPort() == server.getServerSocket().getLocalPort())){
+    	
+    	logger.debug(responsible_server.toString());
+    	logger.debug("0");
+    	
+    	logger.debug(server.getServerSocket().getInetAddress().toString());
+    	logger.debug(server.getPort());
+    	
+    	if(!responsible_server.getAddress().equals("127.0.0.1") || 
+    			!(responsible_server.getPort() == server.getPort())){
 
     		return new KVMessageImpl(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, server.getMetadata());
     	}
     	
+    	logger.debug("1");
+    	
     	/**
-    	 * The server is responsbile, so we get its key
+    	 * The server is responsible, so we get its key
     	 */
+    	
     	if (server.getDatabase().containsKey(key)){
     		return new KVMessageImpl(KVMessage.StatusType.GET_SUCCESS, (String)server.getDatabase().get(key));
     	}
     	else{
+    		logger.debug("2");
     		return new KVMessageImpl(KVMessage.StatusType.GET_ERROR);
     	}
     	
@@ -347,7 +390,7 @@ public class ClientConnection implements Runnable {
     	
     	String hashedkey = Hash.md5(key);
     	ServerInfo responsible_server = server.getMetadata().get(hashedkey);
-    	if(!responsible_server.getAddress().equals(server.getServerSocket().getInetAddress().toString()) || 
+    	if(!responsible_server.getAddress().equals("127.0.0.1") || 
     			!(responsible_server.getPort() == server.getServerSocket().getLocalPort())){
 
     		response = new KVMessageImpl(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, server.getMetadata());

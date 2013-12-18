@@ -3,6 +3,8 @@ package app_kvEcs;
 import java.io.*;
 import java.net.*;
 
+import org.apache.log4j.Logger;
+
 import common.messages.KVAdminMessage;
 import common.messages.KVAdminMessageImpl;
 import common.messages.Message;
@@ -15,6 +17,7 @@ import communication.CommunicationModule;
 public class ECSServerKVLibrary  {
 	
 	CommunicationModule connection;
+	private static Logger logger = Logger.getLogger(ECSServerKVLibrary.class);
 	
 	public ECSServerKVLibrary(String server, int port) throws UnknownHostException, IOException{
 		connection = new CommunicationModule(server,port);
@@ -26,6 +29,7 @@ public class ECSServerKVLibrary  {
 		Message msg = new Message(Message.PermissionType.ADMIN, admin_msg.getBytes());
 		connection.sendBytes(msg.getBytes());
         byte [] response = connection.receiveBytes();
+        logger.info(new String(response));
         KVAdminMessage retmsg = new KVAdminMessageImpl(response);
         return retmsg;
 	}

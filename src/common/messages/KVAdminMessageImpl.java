@@ -2,6 +2,9 @@ package common.messages;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
@@ -12,7 +15,7 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	private Metadata metadata;
 	private Range range;
 	private ServerInfo serverinfo;
-
+	private static Logger logger = Logger.getRootLogger();
 
 
 	private int number;
@@ -157,6 +160,8 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	
 	
 	public KVAdminMessageImpl(byte[] bytes) throws IllegalArgumentException{
+
+		
 		this.msgBytes = bytes;
 		List<Byte> readelement =  new ArrayList<Byte>();
 		String identifier = null;

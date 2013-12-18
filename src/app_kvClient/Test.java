@@ -1,8 +1,14 @@
 package app_kvClient;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import client.KVStore;
+import app_kvEcs.ECSServerKVLibrary;
 import common.messages.*;
 import common.objects.Metadata;
 import common.objects.Range;
@@ -11,13 +17,41 @@ import common.utilis.Hash;
 
 public class Test {
 
-	public static void main(String[] args) {
+	private static Logger logger = Logger.getRootLogger();
+	
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		
 		
 
-		Range range = new Range("aaaa" , "ffff");
-		KVAdminMessage k = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP, range);
+		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);	
+		Metadata m = new Metadata();
+		m.add(s0);
+		ECSServerKVLibrary e = new ECSServerKVLibrary("127.0.0.1", 50000);
+		e.initKVServer(m);
+	
+		KVAdminMessage response = e.start();
 		
-		System.out.println(new String(k.getBytes()));
+		response = e.unlockWrite();
+		
+//		KVStore kv = new KVStore("127.0.0.1", 50000);
+//		kv.connect();
+//		KVMessage resp = kv.get("a");
+//		System.out.println(new String(resp.getBytes()));
+//		System.out.println(response.getStatusType());
+//			ServerInfo i = new ServerInfo("127.0.0.1", 5000);
+//			ProcessBuilder pb = new ProcessBuilder("ssh", "-n", i.getAddress(), "nohup", "java -jar", 
+//					"~/Destop/Programming/Eclipse/ScalableStorageService/ms3-server.jar", ""+i.getPort(), "&");
+//			pb.redirectErrorStream();
+//			try {
+//				pb.start();
+//			} catch (IOException e) {
+//			}
+	    
+
+//		Range range = new Range("aaaa" , "ffff");
+//		KVAdminMessage k = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP, range);
+//		
+//		System.out.println(new String(k.getBytes()));
 //		Map<String,String> h = new HashMap<String,String>(); 
 //		
 //		h.put("000", "a");
@@ -41,6 +75,8 @@ public class Test {
 //		m.add(s1);
 //		m.add(s2);
 //		m.add(s3);
+		
+
 //		
 //		
 //		System.out.println(m.toString());

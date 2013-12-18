@@ -108,7 +108,7 @@ public class KVClient{
                                         printError("Not connected!");
                                 }
                         } else {
-                                printError("Usage: get <key> <value>");
+                                printError("Usage: get <key>");
                         }
                         
                 } else if(tokens[0].equals("disconnect")) {
@@ -145,7 +145,7 @@ public class KVClient{
                         else{
                                 System.out.println(response.getStatus());
                         }
-                } catch (Exception e) {
+                } catch (IOException e) {
                         System.out.println("Unable to put the value in the server");
                         logger.error(e.toString());
                 }
@@ -188,7 +188,7 @@ public class KVClient{
         
         private void printHelp() {
                 StringBuilder sb = new StringBuilder();
-                sb.append(PROMPT).append("ECHO CLIENT HELP (Usage):\n");
+                sb.append(PROMPT).append("KV CLIENT HELP (Usage):\n");
                 sb.append(PROMPT);
                 sb.append("::::::::::::::::::::::::::::::::");
                 sb.append("::::::::::::::::::::::::::::::::\n");

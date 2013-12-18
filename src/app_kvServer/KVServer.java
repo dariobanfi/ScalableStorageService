@@ -14,7 +14,9 @@ public class KVServer extends Thread  {
 	
 	private static Logger logger = Logger.getRootLogger();
 	private int port;
-    private ServerSocket serverSocket;
+
+
+	private ServerSocket serverSocket;
 	private boolean running;
     private Map<String, String> database;
     private boolean acceptingRequests;
@@ -29,18 +31,17 @@ public class KVServer extends Thread  {
 		this.port = port;
 		this.database = Collections.synchronizedMap(new HashMap<String,String>());
 		this.acceptingRequests = false;
+		this.writeLock = false;
 	}
 	
     /**
      * Creates the ServerSocket for the server at the given port
      */
-    private boolean initKVServer(Metadata meta) {
-    	logger.info("Starting Server");
+    private boolean initKVServer() {
     	try {
             serverSocket = new ServerSocket(port);
             logger.info("Server listening on port: " 
             		+ serverSocket.getLocalPort());
-            this.metadata = meta;
             return true;
         
         } catch (IOException e) {
@@ -63,6 +64,7 @@ public class KVServer extends Thread  {
 	 * @param metadata the metadata to set
 	 */
 	public void setMetadata(Metadata metadata) {
+		logger.debug("setting metadata: " + metadata.toString());
 		this.metadata = metadata;
 	}
 	
@@ -76,6 +78,14 @@ public class KVServer extends Thread  {
 	private boolean isRunning() {
         return this.running;
     }
+	
+    public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
 	
     /**
 	 * @return the writeLock
@@ -96,8 +106,8 @@ public class KVServer extends Thread  {
      * Starts the server
      */
     public void start() {
-        
-    	running = initKVServer(null);
+        logger.info("KVServer starting at port " + port);
+    	running = initKVServer();
         if(serverSocket != null) {
         	while(isRunning()){
 	            try {
@@ -141,7 +151,7 @@ public class KVServer extends Thread  {
     }
     
 	public Map<String, String> getDatabase() {
-		return database;
+		return this.database;
 	}
     
     /**
@@ -157,6 +167,7 @@ public class KVServer extends Thread  {
 			} else {
 				int port = Integer.parseInt(args[0]);
 				new KVServer(port).start();
+				logger.info("Starting server on port " + port);
 			}
 		} catch (IOException e) {
 			System.out.println("Error! Unable to initialize logger!");
