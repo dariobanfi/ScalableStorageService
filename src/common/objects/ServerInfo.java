@@ -3,6 +3,16 @@ package common.objects;
 import java.util.ArrayList;
 import java.util.List;
 
+import common.utilis.Hash;
+
+
+/**
+ * 
+ * @author Dario
+ * 
+ * Object holding the information about a server address and port
+ *
+ */
 public class ServerInfo {
 	
 	private String address;
@@ -18,36 +28,32 @@ public class ServerInfo {
 	}
 	
 	public ServerInfo(byte[] bytes){
-		int i=0;
-		List<Byte> readserver =  new ArrayList<Byte>();
-        List<Byte> readport = new ArrayList<Byte>();
+		List<Byte> readelement =  new ArrayList<Byte>();
         
-        // Reading server address
-		while(i<bytes.length){
-            if(bytes[i]==COLUMN){
-                i++;
-                break;
-            }
-            readserver.add(bytes[i]);
-            i++;
+        
+		for(int i=0;i<bytes.length ;i++){
+			
+			if(bytes[i]==COLUMN){
+				byte[] readelementbyte = new byte[readelement.size()];
+		        for (int j = 0; j < readelement.size(); j++){
+		        	readelementbyte[j] = readelement.get(j);
+		        }
+		        this.address = new String(readelementbyte);
+		        readelement.clear();
+			}
+			else if(i == bytes.length - 1){
+				readelement.add(bytes[i]);
+				byte[] readelementbyte = new byte[readelement.size()];
+		        for (int j = 0; j < readelement.size(); j++){
+		        	readelementbyte[j] = readelement.get(j);
+		        }
+		        this.port = Integer.parseInt(new String(readelementbyte));
+			}
+			else{
+				readelement.add(bytes[i]);
+			}
 		}
-		byte[] tmpreadserver = new byte[readserver.size()];
-        for (int j = 0; j < readserver.size(); j++){
-        	tmpreadserver[j] = readserver.get(j);
-        }
-        this.address = new String(tmpreadserver);
-		
-        //Reading port address
-		while(i<bytes.length){
-			readport.add(bytes[i]);
-			i++;
-		}
-		byte[] tmpreadport = new byte[readport.size()];
-        for (int j = 0; j < readport.size(); j++){
-        	tmpreadport[j] = readport.get(j);
-        }
-        this.port = Integer.parseInt(new String(tmpreadport));
-
+        
 	}
 	public String getAddress() {
 		return address;
@@ -73,6 +79,10 @@ public class ServerInfo {
 	
 	public String toString(){
 		return this.address + ":" + this.port;
+	}
+	
+	public String toHash(){
+		return Hash.md5(toString());
 	}
 	public byte[] getBytes(){
 		return (this.address + ":" + this.port).getBytes();

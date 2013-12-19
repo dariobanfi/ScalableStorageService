@@ -3,6 +3,13 @@ package common.objects;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 
+ * @author Dario
+ * 
+ * Object holding the two limits of a range
+ *
+ */
 public class Range {
 	
 	private String lower_limit;
@@ -11,7 +18,9 @@ public class Range {
 	/**
 	 * @return the lower_limit
 	 */
-	
+	public Range(){
+		
+	}
 	public Range(String lower_limit, String upper_limit){
 		this.lower_limit = lower_limit;
 		this.upper_limit = upper_limit;
@@ -22,7 +31,7 @@ public class Range {
 		List<Byte> readlowerlimit =  new ArrayList<Byte>();
         List<Byte> readupperlimit = new ArrayList<Byte>();
         
-        // Reading server address
+        // Reading lowerlimit
 		while(i<bytes.length){
             if(bytes[i]==MINUS){
                 i++;
@@ -37,7 +46,7 @@ public class Range {
         }
         this.lower_limit = new String(tmpreadlowerlimit);
 		
-        //Reading port address
+        //Reading upperlimit
 		while(i<bytes.length){
 			readupperlimit.add(bytes[i]);
 			i++;
@@ -72,7 +81,7 @@ public class Range {
 	}
 	
 	public byte[] getBytes(){
-		return (lower_limit + ":" + upper_limit).getBytes();
+		return (lower_limit + "-" + upper_limit).getBytes();
 	}
 	
 

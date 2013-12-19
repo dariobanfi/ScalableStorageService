@@ -62,7 +62,7 @@ public class KVMessageImpl implements KVMessage {
             byte[] identifier1 = null;
             if(type.equals(KVMessage.StatusType.GET))
             	identifier1 = key_identifier.getBytes();
-            else if(type.equals(KVMessage.StatusType.GET_SUCCESS))
+            else if(type.equals(KVMessage.StatusType.GET_SUCCESS) || type.equals(KVMessage.StatusType.PUT_UPDATE))
             	identifier1 = value_identifier.getBytes();
             else
             	throw new IllegalArgumentException("Invalid type");
@@ -96,8 +96,6 @@ public class KVMessageImpl implements KVMessage {
          * This constructor is used for the PUT requests
          * 
          */
-        
-        
         
         public KVMessageImpl(KVMessage.StatusType type, String key, String value){
             this.type = type;

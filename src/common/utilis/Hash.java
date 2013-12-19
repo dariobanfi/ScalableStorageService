@@ -4,6 +4,12 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * 
+ * @author Dario
+ *
+ * Utility function to hash a string
+ */
 public class Hash {
 
 	public static String md5(String input){

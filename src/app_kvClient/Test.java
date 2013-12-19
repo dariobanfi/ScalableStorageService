@@ -8,6 +8,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import client.KVStore;
+import app_kvEcs.ECSClient;
+import app_kvEcs.ECSServer;
 import app_kvEcs.ECSServerKVLibrary;
 import common.messages.*;
 import common.objects.Metadata;
@@ -17,24 +19,37 @@ import common.utilis.Hash;
 
 public class Test {
 
-	private static Logger logger = Logger.getRootLogger();
+	public static Logger logger = Logger.getLogger("Test>");
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		
-		
 
-		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);	
-		Metadata m = new Metadata();
-		m.add(s0);
-		ECSServerKVLibrary e = new ECSServerKVLibrary("127.0.0.1", 50000);
-		e.initKVServer(m);
+
+		// ECS
+		
 	
-		KVAdminMessage response = e.start();
 		
-		response = e.unlockWrite();
+//		ECSServer ecs = new ECSServer("settings.config");
+//		ECSClient ecsclient = new ECSClient(ecs);
+//		
+//		ecs.initService(4);
+//		
+//		ecs.start();
 		
-//		KVStore kv = new KVStore("127.0.0.1", 50000);
-//		kv.connect();
+//		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);	
+//		Metadata m = new Metadata();
+//		m.add(s0);
+//		ECSServerKVLibrary e = new ECSServerKVLibrary("127.0.0.1", 50000);
+//		e.initKVServer(m);
+//	
+//		KVAdminMessage response = e.start();
+//		
+//		response = e.unlockWrite();
+		
+		KVStore kv = new KVStore("127.0.0.1", 50002);
+		kv.connect();
+        for(char i='a';i<'z';i++)
+        	kv.put(Character.toString(i), Character.toString(i));
 //		KVMessage resp = kv.get("a");
 //		System.out.println(new String(resp.getBytes()));
 //		System.out.println(response.getStatusType());
@@ -49,22 +64,20 @@ public class Test {
 	    
 
 //		Range range = new Range("aaaa" , "ffff");
-//		KVAdminMessage k = new KVAdminMessageImpl(KVAdminMessage.StatusType.CLEANUP, range);
+//		ServerInfo s = new ServerInfo("aaa", 5000);
+//		KVAdminMessage k = new KVAdminMessageImpl(KVAdminMessage.StatusType.MOVE_DATA, range, s);
 //		
 //		System.out.println(new String(k.getBytes()));
-//		Map<String,String> h = new HashMap<String,String>(); 
+//		for(byte b:k.getBytes())
+//			System.out.print(b + " ");
 //		
-//		h.put("000", "a");
-//		h.put("111", "b");
-//		h.put("222", "c");
-//		h.put("ccc", "d");
+//		KVAdminMessage k2 = new KVAdminMessageImpl(k.getBytes());
+//		System.out.println(k2.getRange().getLower_limit());
+//		System.out.println(k2.getRange().getUpper_limit());
+
 //		
-//		for (Map.Entry<String, String> entry : h.entrySet()) {
-//			if(entry.getKey().compareTo("001")>0 && entry.getKey().compareTo("ccc")<=0 ){
-//				System.out.print(entry.getKey());
-//		    	System.out.println(entry.getValue());
-//			}
-//		}
+
+//
 //		ServerInfo s0 = new ServerInfo("127.0.0.1", 50000);
 //		ServerInfo s1 = new ServerInfo("127.0.0.1", 50001);
 //		ServerInfo s2 = new ServerInfo("127.0.0.1", 50002);
@@ -75,8 +88,12 @@ public class Test {
 //		m.add(s1);
 //		m.add(s2);
 //		m.add(s3);
-		
-
+//		System.out.println(m.toString());
+//		
+//		String dropServerKey = s2.toHash();
+//		String dropServerPredecessorKey = m.getPredecessor(dropServerKey).toHash();
+//		System.out.println(dropServerKey);
+//		System.out.println(dropServerPredecessorKey);
 //		
 //		
 //		System.out.println(m.toString());

@@ -1,10 +1,17 @@
 package common.messages;
 
-import org.apache.log4j.Logger;
+/**
+ * 
+ * @author Dario
+ * 
+ * This is basically a wrap class which is used by the KVServer to differentiate
+ * between user and admin messages.
+ * A single byte is added in front of a byte payload (the KVMessage or KVAdminMessage representation),
+ * and with this we can see the message permissions
+ *
+ */
 
 public class Message {
-	
-	private static Logger logger = Logger.getRootLogger();
 	
     public enum PermissionType {
     	USER,
@@ -17,17 +24,19 @@ public class Message {
     private byte admin_flag = 1;
     private byte user_flag  = 2;
     
+    /**
+     * Marshals the byte array into a msg
+     * @param bytes to serialize
+     */
     public Message(byte[] bytes){
     	this.msgBytes = bytes;
     	if(bytes[0]== admin_flag){
-    		logger.debug("Unserialzing admin message");
     		byte[] payload = new byte[bytes.length-1];
     		System.arraycopy(bytes, 1, payload,  0, bytes.length-1);
     		this.permission = PermissionType.ADMIN;
     		this.payload = payload;
     	}
     	else if(bytes[0] == user_flag){
-    		logger.debug("Unserialzing user message");
     		byte[] payload = new byte[bytes.length-1];
     		System.arraycopy(bytes, 1, payload,  0, bytes.length-1);
     		this.permission = PermissionType.USER;    	

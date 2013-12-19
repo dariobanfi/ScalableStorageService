@@ -2,14 +2,12 @@ package app_kvClient;
 
 import java.io.*;
 import java.net.*;
-
 import logger.LogSetup;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import common.messages.KVMessage;
-
 import client.KVCommInterface;
 import client.KVStore;
 
@@ -23,7 +21,7 @@ import client.KVStore;
 
 public class KVClient{
 
-        private static Logger logger = Logger.getRootLogger();
+        private static Logger logger = Logger.getLogger(KVClient.class);
         private static final String PROMPT = "KVServerClient> ";
         private BufferedReader stdin;
         private boolean stop = false;
@@ -36,6 +34,7 @@ public class KVClient{
          * This function is runs until the client decides to quit the program
          */
         public void run() {
+        		System.out.println("Welcome to the KVClient CLI Inteface.");
                 while(!stop) {
                         stdin = new BufferedReader(new InputStreamReader(System.in));
                         System.out.print(PROMPT);
@@ -137,6 +136,9 @@ public class KVClient{
         }
         
         private void put(String key, String value){        
+        	if(KVStore!=null){
+                	
+                
                 try {
                         KVMessage response = KVStore.put(key, value);
                         if(response.getValue()!=null){
@@ -146,12 +148,17 @@ public class KVClient{
                                 System.out.println(response.getStatus());
                         }
                 } catch (IOException e) {
-                        System.out.println("Unable to put the value in the server");
-                        logger.error(e.toString());
+                    System.out.println("Disconnected from server, connect again");
+                    KVStore = null;
                 }
+        	}
+        	else{
+        		System.out.println("Error, disconnected from server, maybe it was dropped.");
+        	}
         }
         
-        private void get(String key){        
+        private void get(String key){
+        	if(KVStore!=null){
                 try {
                         KVMessage response = KVStore.get(key);
                         if(response.getStatus().equals(KVMessage.StatusType.GET_SUCCESS)){
@@ -160,10 +167,14 @@ public class KVClient{
                         else{
                                 System.out.println(response.getStatus());
                         }
-                } catch (Exception e) {
-                        System.out.println(e.toString());
-                        logger.error(e.toString());
+                } catch (IOException e) {
+                    System.out.println("Disconnected from server, connect again");
+                    KVStore = null;
                 }
+        	}
+        	else{
+        		System.out.println("Error, disconnected from server, maybe it was dropped.");
+        	}
         }
 
         private void connect(String address, int port) 
@@ -258,7 +269,7 @@ public class KVClient{
      */
     public static void main(String[] args) {
             try {
-                        new LogSetup("logs/client/client.log", Level.OFF);
+                        new LogSetup("logs/client/client.log", Level.ALL);
                         KVClient app = new KVClient();
                         app.run();
                 } catch (IOException e) {

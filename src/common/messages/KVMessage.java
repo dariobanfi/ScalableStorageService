@@ -38,7 +38,16 @@ public interface KVMessage {
 	 */
 	public StatusType getStatus();
 	
+	/**
+	 * @return the metadata containing information about the distributed system
+	 * structure
+	 */
+	
 	public Metadata getMetaData();
+	
+	/**
+	 * @return the byte representation of the message
+	 */
 
 	byte[] getBytes();
 	

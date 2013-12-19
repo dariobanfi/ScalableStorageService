@@ -3,28 +3,45 @@ package common.messages;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 
 import common.objects.Metadata;
 import common.objects.Range;
 import common.objects.ServerInfo;
 
+
+/**
+ * 
+ * @author Dario
+ * 
+ * This class provide message serialization and unserialization
+ * The general format of a message is:
+ * 
+ * identifier SEPARATOR element SEPARATOR identifier2 SEPARATOR element2 END
+ * 
+ * For example a message with statustype = SUCCESS translates to:
+ * 
+ * statustype SEPARATOR SUCCESS END
+ * 
+ * Where separator and end are special byte characters
+ *
+ */
 public class KVAdminMessageImpl implements KVAdminMessage {
 	
 	private KVAdminMessage.StatusType type;
+
+
 	private Metadata metadata;
 	private Range range;
 	private ServerInfo serverinfo;
-	private static Logger logger = Logger.getRootLogger();
 
 
-	private int number;
+	private String key;
     private byte[] msgBytes;
     private static final byte END = 13;
     private static final byte SEPARATOR = 29;
     private static final String type_identifier = "statustype";
     private static final String metadata_identifier = "metadata";
-    private static final String number_identifier = "number";
+    private static final String key_identifier = "key";
     private static final String range_identifier = "range";
     private static final String serverinfo_identifier = "serverinfo";
 	
@@ -66,32 +83,7 @@ public class KVAdminMessageImpl implements KVAdminMessage {
         
         this.msgBytes = tmp;
 	}
-	
-	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, int number){
-        this.type = statustype;
-        this.number = number;
-        
-        byte[] identifier0 = type_identifier.getBytes();
-        byte[] identifier1 = number_identifier.getBytes();
-        byte[] statusbytes = type.name().getBytes();
-        byte[] numberbytes = String.valueOf(number).getBytes();
-        
-        byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 + identifier1.length + 1 + numberbytes.length + 1];
-        
-        System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
-        tmp[identifier0.length] = SEPARATOR;
-        
-        System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
-        tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
-        
-        System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
-        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
-        
-        System.arraycopy(numberbytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , numberbytes.length);
-        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + numberbytes.length] = END;
-        
-        this.msgBytes = tmp;
-	}
+
 	
 	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, Range range){
         this.type = statustype;
@@ -158,10 +150,52 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		
 	}
 	
+	public KVAdminMessageImpl(KVAdminMessage.StatusType statustype, String key, Metadata metadata){
+        this.type = statustype;
+        this.key = key;
+        this.metadata = metadata;
+        
+        byte[] identifier0 = type_identifier.getBytes();
+        byte[] statusbytes = type.name().getBytes();
+        byte[] identifier1 = key_identifier.getBytes();
+        byte[] keybytes = key.getBytes();
+        byte[] identifier2 = metadata_identifier.getBytes();
+        byte[] metadatabytes = metadata.getBytes();
+        
+        
+        byte[] tmp = new byte[identifier0.length + 1 +  statusbytes.length + 1 +
+                              identifier1.length + 1 + keybytes.length + 1 + identifier2.length + 1
+                              + metadatabytes.length + 1];
+        
+        System.arraycopy(identifier0, 0, tmp, 0, identifier0.length);
+        tmp[identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(statusbytes, 0, tmp, (identifier0.length + 1) , statusbytes.length);
+        tmp[statusbytes.length + 1 + identifier0.length] = SEPARATOR;
+        
+        System.arraycopy(identifier1, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1) , identifier1.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length] = SEPARATOR;
+        
+        System.arraycopy(keybytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1) , keybytes.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length] = SEPARATOR;
+        
+        System.arraycopy(identifier2, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1) , identifier2.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + keybytes.length + 1 + identifier2.length] = SEPARATOR;
+        
+        System.arraycopy(metadatabytes, 0, tmp, (identifier0.length + 1 + statusbytes.length + 1 + identifier1.length + 1 + keybytes.length + 1 + identifier2.length + 1) , metadatabytes.length);
+        tmp[identifier0.length + 1 + statusbytes.length + 1 + identifier1.length  + 1 + keybytes.length + 1 + identifier2.length + 1 + metadatabytes.length] = END;
+        
+        this.msgBytes = tmp;
+		
+	}
 	
+	/**
+	 * Transforms a byte array into a KVMessage
+	 * @param bytes
+	 * @throws IllegalArgumentException
+	 */
 	public KVAdminMessageImpl(byte[] bytes) throws IllegalArgumentException{
 
-		
 		this.msgBytes = bytes;
 		List<Byte> readelement =  new ArrayList<Byte>();
 		String identifier = null;
@@ -188,8 +222,6 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        	
 		        	if(identifier.equals(type_identifier)){
 			           try{
-			        	   System.out.println(identifier + " " + i + " " + new String(readelementarr));
-			        	   System.out.println("---");
 			        	   this.type = KVAdminMessage.StatusType.valueOf(new String(readelementarr));
 			        	   readelement.clear();
 		                }
@@ -207,13 +239,14 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 		        		readelement.clear();
 		        	}
 		        	
-		        	else if(identifier.equals(serverinfo_identifier)){
-		        		this.serverinfo = new ServerInfo(readelementarr);
+		        	else if(identifier.equals(key_identifier)){
+		        		this.key = new String(readelementarr);
 		        		readelement.clear();
 		        	}
 		        	
-		        	else if(identifier.equals(number_identifier)){
-		        		this.number = Integer.parseInt(new String(readelementarr));
+		        	else if(identifier.equals(serverinfo_identifier)){
+		        		System.out.println(new String(readelementarr));
+		        		this.serverinfo = new ServerInfo(readelementarr);
 		        		readelement.clear();
 		        	}
 		        	
@@ -259,14 +292,15 @@ public class KVAdminMessageImpl implements KVAdminMessage {
 	public byte[] getBytes() {
 		return this.msgBytes;
 	}
-	
-	/**
-	 * @return the number
-	 */
-	public int getNumber() {
-		return number;
+
+	public String getKey() {
+		return key;
 	}
-	
+
+
+	public void setKey(String key) {
+		this.key = key;
+	}
 
 
 

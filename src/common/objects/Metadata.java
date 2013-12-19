@@ -3,6 +3,18 @@ package common.objects;
 import java.util.*;
 import common.utilis.Hash;
 
+
+/**
+ * @author Dario
+ * 
+ * This class is used to represent the distributed system hash
+ * ring and structure
+ * 
+ * The structure is held in a Sorted TreeMap (this.metadata) with as key, the hash
+ * key of the server (calculated by hasing its address and IP) and as value
+ * a ServerInfo object, containing the couple server ip
+ *
+ */
 public class Metadata {
 
 	private SortedMap<String, ServerInfo> metadata;
@@ -37,20 +49,34 @@ public class Metadata {
 		}
 	}
 	
+	/**
+	 * We simply add the key, which will go in the right
+	 * position of the tree since it's a SortedMap
+	 * @param serverinfo to add
+	 */
+	
 	public void add(ServerInfo serverinfo){
 		String key = Hash.md5(serverinfo.toString());
 		this.metadata.put(key, serverinfo);
 	}
 	
+	/**
+	 * @param serverinfo to remove, which will be hashed and then
+	 * used as key to remove
+	 */
+	
 	public void remove(ServerInfo serverinfo){
-		String key = Hash.md5(serverinfo.toString());
-		this.metadata.put(key, serverinfo);
+		String key = serverinfo.toHash();
 		this.metadata.remove(key);
-		
 	}
 	
 	/**
-	 * Returns the serverinfo responsible for handing the key
+	 * Returns the serverinfo responsible for handling the key
+	 * We used tailMap which returns all the keys bigger than the given key,
+	 * if the map is empty it means that there are no bigger keys (we are the biggest) so
+	 * we take the first one (in the circular logic), otherwise we take the first
+	 * key bigger than ours
+	 * 
 	 * @param key
 	 * @return ServerInfo
 	 */
@@ -66,20 +92,20 @@ public class Metadata {
 		 }
 	 
 	 /**
-	  * Returns the predecessor server in the ring topology
+	  * Returns the predecessor server in the ring topology, using the same
+	  * logic of get() but inversed
 	  * @param key
 	  * @return ServerInfo
 	  */
 	 public ServerInfo getPredecessor(String key) {
-		   if (metadata.isEmpty()) {
-		     return null;
-		   }
-		   if (!metadata.containsKey(key)) {
-			     SortedMap<String, ServerInfo> headMap = metadata.headMap(key);
-			     key = headMap.isEmpty() ? metadata.lastKey() : headMap.lastKey();
-		   }
-		   return metadata.get(key);
+		 if (metadata.isEmpty()) {
+		 	return null;
 		 }
+	     SortedMap<String, ServerInfo> headMap = metadata.headMap(key);
+	     key = headMap.isEmpty() ? metadata.lastKey() : headMap.lastKey();
+	   
+	     return metadata.get(key);
+	 }
 	 
 	 /**
 	  * Serialization function for sending over the network

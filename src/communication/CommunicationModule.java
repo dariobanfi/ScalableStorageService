@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
  */
 public class CommunicationModule {
 	
-	private Logger logger = Logger.getRootLogger();
 	private boolean running;
 	private String address;
 	private int port;
@@ -45,14 +44,12 @@ public class CommunicationModule {
 			setRunning(true);
 			output = clientSocket.getOutputStream();
 			input = clientSocket.getInputStream();
-			logger.info("Connection established");
 	}
 
 
 	public void sendBytes(byte[] bytes) throws IOException {
 		output.write(bytes, 0, bytes.length);
 		output.flush();
-		logger.info("Sent " + bytes.length + " bytes");
     }
 	
 	public byte[] receiveBytes() throws IOException {
@@ -120,13 +117,11 @@ public class CommunicationModule {
 	
 	public void closeConnection() throws IOException {
 		setRunning(false);
-		logger.info("Disconnecting");
 		if (clientSocket != null) {
 			input.close();
 			output.close();
 			clientSocket.close();
 			clientSocket = null;
-			logger.info("connection closed!");
 		}
 	}
 	

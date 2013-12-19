@@ -2,10 +2,9 @@ package app_kvServer;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.Map;
-
 import org.apache.log4j.*;
-
 import client.KVStore;
 import common.messages.*;
 import common.objects.Metadata;
@@ -20,12 +19,11 @@ import communication.CommunicationModule;
  *
  * This class implements Runnable and it represents the thread that gets launched every time
  * a new socket request comes to the server.
- * It receives the database pointer from the server app, in order to do operations on it
- * (with synchronized methods, to avoid problems)
+ * It handles the operation requested by the client and the ecs for the KVServer
  */
 public class ClientConnection implements Runnable {
 
-	private static Logger logger = Logger.getRootLogger();
+	private static Logger logger = Logger.getLogger(ClientConnection.class);
 	
 	private boolean isOpen;
 	private CommunicationModule connection;
@@ -54,6 +52,9 @@ public class ClientConnection implements Runnable {
 				try {
 				    Message latestMsg = receiveMessage();
 				    if(latestMsg!=null){
+				    	
+				    	// We check if we have to handle a user message or admin message
+				    	
 					    if(latestMsg.getPermission().equals(Message.PermissionType.ADMIN)){
 					    	processKVAdminMessage(latestMsg);
 					    } else if(latestMsg.getPermission().equals(Message.PermissionType.USER)){
@@ -72,7 +73,6 @@ public class ClientConnection implements Runnable {
 			logger.error("Error! Connection could not be established!", ioe);
 			
 		} finally {
-			
 			try {
 				if (connection != null) {
 					connection.closeConnection();
@@ -91,10 +91,9 @@ public class ClientConnection implements Runnable {
 	 * 
 	 */
 	private void processKVAdminMessage(Message message){
-		logger.info(message.getPermission());
 		KVAdminMessage msg = new KVAdminMessageImpl(message.getPayload());
 		if(msg.getStatusType().equals(KVAdminMessage.StatusType.START)){
-			logger.info("Received START message");
+			logger.debug("Received START message");
 			start();
 		}
 
@@ -102,7 +101,7 @@ public class ClientConnection implements Runnable {
 			stop();
 		}
 		else if(msg.getStatusType().equals(KVAdminMessage.StatusType.INIT_KV_SERVER)){
-			initKVServer(msg.getMetadata());
+			initKVServer(msg.getKey(), msg.getMetadata());
 		}
 		else if(msg.getStatusType().equals(KVAdminMessage.StatusType.SHUTDOWN)){
 			shutDown();
@@ -140,7 +139,8 @@ public class ClientConnection implements Runnable {
 		
 		KVMessage msg = new KVMessageImpl(message.getPayload());
 		KVMessage response;
-		/**
+		
+		/*
 		 * Checking if the server is accepting client
 		 * requests, if not returning SERVER_STOPPED
 		 */
@@ -154,7 +154,7 @@ public class ClientConnection implements Runnable {
 			}
 		}
 		
-		/**
+		/*
 		 * Server accepting clients, we process the 
 		 * request
 		 */
@@ -184,7 +184,7 @@ public class ClientConnection implements Runnable {
 	}
 	
 	/**
-	 * Method sends a KVMessage using this socket.
+	 * Method sends a KVMessage using his socket.
 	 * @param msg the message that is to be sent.
 	 * @throws IOException some I/O error regarding the output stream 
 	 * 
@@ -194,15 +194,13 @@ public class ClientConnection implements Runnable {
 	public void sendMessage(KVMessage msg) throws IOException {
 		byte[] msgBytes = msg.getBytes();
 		connection.sendBytes(msgBytes);
-		logger.info("SEND \t<" 
-				+ connection.toString());
+		logger.debug("Sending back " + msg.getStatus());
     }
 	
 	public void sendMessage(KVAdminMessage msg) throws IOException {
 		byte[] msgBytes = msg.getBytes();
 		connection.sendBytes(msgBytes);
-		logger.info("SEND \t<" 
-				+ connection.toString());
+		logger.debug("Sending back " + msg.getStatusType());
     }
 	
 	/**
@@ -210,8 +208,8 @@ public class ClientConnection implements Runnable {
 	 * @throws IOException
 	 * 
 	 * This function reads the bytes from the socket until it finds a newline character
-	 * Then it passes the byte array to KVMessageImpl which will try to marshal it into
-	 * a KVMessage, which will be returned by the method
+	 * Then it passes the byte array to Message which will try to marshal it into
+	 * a Message, which will be returned by the method
 	 */
 	private Message receiveMessage() throws IOException {
 		
@@ -223,99 +221,192 @@ public class ClientConnection implements Runnable {
 				throw new IllegalArgumentException("Malformed message");
 		}
 		catch(IllegalArgumentException e){
-			logger.error(e.getMessage());
 			retvalue = null;
 		}
 		
 		return retvalue;
     }
 	
+	/**
+	 * Sends a positive acknowledgment for the receive command (SUCCESS)
+	 */
+	
 	private void sendAck(){
 		try {
+			logger.debug("Sending ack");
 			connection.sendBytes(new KVAdminMessageImpl(KVAdminMessage.StatusType.SUCCESS).getBytes());
 		} catch (IOException e) {
 			logger.error("Unable to send ACK back");
 		}
 	}
+	
+	
 	// ADMIN OPERATIONS, CALLED BY ECS
 	// ---------------------------------------------------
 	
-	// Initializing KVServer with metadata and sencind back a acknowledgement
-	public void initKVServer(Metadata metadata){
+	// Initializing KVServer with metadata and the key and sends back a acknowledgement
+	public void initKVServer(String key, Metadata metadata){
+		logger.debug("Initializing server");
 		server.setMetadata(metadata);
+		server.setKey(key);
 		sendAck();
 	}
 	
-	// Starting and sending back a acknowledgement
+	// Starting and sending back a acknowledgment
 	public void start(){
+		logger.debug("Starting accepting clients");
 		server.setacceptingRequests(true);
 		sendAck();
 	}
 	
-	// Stopping server and sending back a acknowledgement
+	// Stopping server and sending back a acknowledgment
 	public void stop(){
+		logger.debug("Stop accepting clients");
 		server.setacceptingRequests(false);
 		sendAck();
 	}
 	
-	// Shuttding down server and sending back a acknowledgement
+	// Shuttding down server and sending back a acknowledgment
 	public void shutDown(){
-		server.shutDown();
+		logger.debug("Shutting down");
 		sendAck();
+		server.shutDown();
+
 	}
 	
-	// Locking write on server and sending back a acknowledgement
+	// Locking write on server and sending back a acknowldgment
 	public void lockWrite(){
+		logger.debug("Locking the write operations");
 		server.setWriteLock(true);
 		sendAck();
 	}
 	
-	// Unlocking write on server and sending back a acknowledgement
+	// Unlocking write on server and sending back a acknowledgment
 	public void unlockWrite(){
+		logger.debug("Unlocking the write operations");
 		server.setWriteLock(false);
 		sendAck();
 	}
 	
-	// Moving data on server and sending back a acknowledgement
+	/**
+	 * Moving data on server and sending back a acknowledgment
+	 * @param range
+	 * @param server
+	 */
 	public void moveData(Range range, ServerInfo server){
+		logger.debug("Moving elements to " + server.toString());
+		Range range1=null;
+		Range range2=null;
+		
+		// Since the hashing is circular, but String comparison is not, we split the 
+		// ranges in two if the lower limit is higher than the upper one
+		
+		if(range.getLower_limit().compareTo(range.getUpper_limit())>0){
+			range1 = new Range(range.getLower_limit(), "ffffffffffffffffffffffffffffffff");
+			range2 = new Range("00000000000000000000000000000000", range.getUpper_limit());
+			logger.debug("Moving from " + range1.getLower_limit() + " to " + range1.getUpper_limit());
+			logger.debug("Moving from " + range2.getLower_limit() + " to " + range2.getUpper_limit());
+		}
+		else{
+			range1 = new Range(range.getLower_limit(),range.getUpper_limit());
+			logger.debug("Moving from " + range1.getLower_limit() + " to " + range1.getUpper_limit());
+		}
+			
+		
 		for (Map.Entry<String, String> entry : this.server.getDatabase().entrySet()) {
 			String hashkey = Hash.md5(entry.getKey());
-			if(hashkey.compareTo(range.getLower_limit())>0 && hashkey.compareTo(range.getUpper_limit())<=0 ){
-				
+			if(hashkey.compareTo(range1.getLower_limit())>0 && hashkey.compareTo(range1.getUpper_limit())<=0 ){
 				KVStore kv = new KVStore(server.getAddress(), server.getPort());
 				try {
 					kv.connect();
+					logger.debug("Putting " + entry.getKey() + " " + entry.getValue() + " to " + server.toString());
 					kv.put(entry.getValue(), entry.getValue());
 				} catch (IOException e) {
-					logger.info("[moveData] problem connecting to the server " + server.toString());
+					logger.error("[moveData] problem connecting to the server " + server.toString() );
 				}
-				logger.debug("Moving " + entry.getKey() + " " + hashkey);
 			}
 		}
+		
+		
+		// If we had splitted the ranges
+		
+		if(range2!=null){
+			for (Map.Entry<String, String> entry : this.server.getDatabase().entrySet()) {
+				String hashkey = Hash.md5(entry.getKey());
+				if(hashkey.compareTo(range2.getLower_limit())>0 && hashkey.compareTo(range2.getUpper_limit())<=0 ){
+					KVStore kv = new KVStore(server.getAddress(), server.getPort());
+					try {
+						kv.connect();
+						logger.debug("Putting " + entry.getKey() + " " + entry.getValue() + " to " + server.toString());
+						kv.put(entry.getValue(), entry.getValue());
+					} catch (IOException e) {
+						logger.error("[moveData] problem connecting to the server " + server.toString() );
+					}
+				}
+			}		
+		}
+		
 		sendAck();
 		
 	}
 	
-	// Updating metadata and sending back a acknowledgement
+	/**
+	 * Updating metadata and sending back a acknowledgment
+	 * @param metadata
+	 */
 	public void update(Metadata metadata){
+		logger.debug("Updating metadata");
 		server.setMetadata(metadata);
 		sendAck();
 	}
 	
-	// Cleaning up elements not under responsibility and sending back a acknowledgement
+	/**
+	 * Cleaning up elements not under responsibility and sending back a acknowledgment
+	 * @param range of the elements to clean
+	 */
 	public void cleanup(Range range){
-		for (Map.Entry<String, String> entry : this.server.getDatabase().entrySet()) {
-			String hashkey = Hash.md5(entry.getKey());
-			if(hashkey.compareTo(range.getLower_limit())>0 && hashkey.compareTo(range.getUpper_limit())<=0 ){
-				server.getDatabase().remove(entry.getKey());
-				logger.debug("Clearning " + entry.getKey() + " " + hashkey);
-			}
+		Range range1=null;
+		Range range2=null;
+		
+		// Since the hashing is circular, but String comparaison is not, we split the 
+		// ranges in two if the lowerlimit is higher than the upper one
+		
+		if(range.getLower_limit().compareTo(range.getUpper_limit())>0){
+			range1 = new Range(range.getLower_limit(), "ffffffffffffffffffffffffffffffff");
+			range2 = new Range("00000000000000000000000000000000", range.getUpper_limit());
+			logger.debug("Removing from " + range1.getLower_limit() + " to " + range1.getUpper_limit());
+			logger.debug("Removing from " + range2.getLower_limit() + " to " + range2.getUpper_limit());
 		}
+		else{
+			range1 = new Range(range.getLower_limit(),range.getUpper_limit());
+			logger.debug("Removing from " + range1.getLower_limit() + " to " + range1.getUpper_limit());
+		}
+		
+		   for(Iterator<Map.Entry<String, String>> it = server.getDatabase().entrySet().iterator(); it.hasNext(); ) {
+			      Map.Entry<String, String> entry = it.next();
+			      String hashkey = Hash.md5(entry.getKey());
+				   if(hashkey.compareTo(range1.getLower_limit())>0 && hashkey.compareTo(range1.getUpper_limit())<=0 ){
+			        it.remove();
+			        logger.debug("Cleaning " + entry.getKey() + " " + hashkey);
+			      }
+		   }
+
+		if(range2!=null){
+			
+			   for(Iterator<Map.Entry<String, String>> it = server.getDatabase().entrySet().iterator(); it.hasNext(); ) {
+				      Map.Entry<String, String> entry = it.next();
+				      String hashkey = Hash.md5(entry.getKey());
+					   if(hashkey.compareTo(range2.getLower_limit())>0 && hashkey.compareTo(range2.getUpper_limit())<=0 ){
+				        it.remove();
+				        logger.debug("Cleaning " + entry.getKey() + " " + hashkey);
+				      }
+			   }
+
+			
+		}
+		
 		sendAck();
 	}
-	
-	
-	
 	
 	
 	
@@ -330,32 +421,25 @@ public class ClientConnection implements Runnable {
      */
     public KVMessage get(String key){
     	
-    	/** 
+    	/*
     	 * Determining if the key is in the server's range,
     	 * if not, we send the updated metadata back to the
     	 * client with the message SERVER_NOT_RESPONSIBLE
     	 */
     	
     	String hashedkey = Hash.md5(key);
-    	logger.debug("looking for " + hashedkey + "in " + server.getMetadata().toString());
     	
     	ServerInfo responsible_server = server.getMetadata().get(hashedkey);
     	
-    	logger.debug(responsible_server.toString());
-    	logger.debug("0");
+    	logger.debug("Responsible server: " + responsible_server.toHash());
+    	logger.debug("This server: " + server.getKey());
     	
-    	logger.debug(server.getServerSocket().getInetAddress().toString());
-    	logger.debug(server.getPort());
-    	
-    	if(!responsible_server.getAddress().equals("127.0.0.1") || 
-    			!(responsible_server.getPort() == server.getPort())){
-
+    	if(!responsible_server.toHash().equals(server.getKey())){
     		return new KVMessageImpl(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, server.getMetadata());
     	}
     	
-    	logger.debug("1");
     	
-    	/**
+    	/*
     	 * The server is responsible, so we get its key
     	 */
     	
@@ -363,10 +447,8 @@ public class ClientConnection implements Runnable {
     		return new KVMessageImpl(KVMessage.StatusType.GET_SUCCESS, (String)server.getDatabase().get(key));
     	}
     	else{
-    		logger.debug("2");
     		return new KVMessageImpl(KVMessage.StatusType.GET_ERROR);
     	}
-    	
     }
     
     /**
@@ -382,7 +464,7 @@ public class ClientConnection implements Runnable {
     	KVMessageImpl response;
     	Map<String,String> database = server.getDatabase();
     	
-    	/** 
+    	/*
     	 * Determining if the key is in the server's range,
     	 * if not, we send the updated metadata back to the
     	 * client with the message SERVER_NOT_RESPONSIBLE
@@ -390,60 +472,58 @@ public class ClientConnection implements Runnable {
     	
     	String hashedkey = Hash.md5(key);
     	ServerInfo responsible_server = server.getMetadata().get(hashedkey);
-    	if(!responsible_server.getAddress().equals("127.0.0.1") || 
-    			!(responsible_server.getPort() == server.getServerSocket().getLocalPort())){
+    	if(!responsible_server.toHash().equals(server.getKey())){
 
     		response = new KVMessageImpl(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE, server.getMetadata());
     		return response;
     	}
     	
-    	
-    	/**
+    	/*
     	 * If we are here, it means the server was responsible for
     	 * the hashkey, so we first check if he his not in WRITE_LOCK 
     	 * status
     	 */
+    	logger.debug("Key"+key+"Writelock:"+server.isWriteLock()+"ContainsKey"+database.containsKey(key)
+    			+"Value"+value);
     	
+    	// Checking if the server is not locked
     	if(!server.isWriteLock()){
+    		
 			if (database.containsKey(key)){
 		    	if(value.equals("null")){
 		    		try{
 		    			database.remove(key);
 		    			logger.info("deleted:  " + database.get(key));
-		    			response = new KVMessageImpl(KVMessage.StatusType.DELETE_SUCCESS);
+		    			return new KVMessageImpl(KVMessage.StatusType.DELETE_SUCCESS);
 		    		}
 		    		catch(Exception e){
-		    			response = new KVMessageImpl(KVMessage.StatusType.DELETE_ERROR);
+		    			return new KVMessageImpl(KVMessage.StatusType.DELETE_ERROR);
 		    		}
 		    	}
 		    	else{
-	    			try{
-	    				database.put(key, value);
-	    				logger.info("Received " + key + value);
-	    				response = new KVMessageImpl(KVMessage.StatusType.PUT_UPDATE, value);
-	    			}
-	    			catch(Exception e){
-	    				response = new KVMessageImpl(KVMessage.StatusType.PUT_ERROR);
-	    			}
+    				database.put(key, value);
+    				logger.info("Received " + key + value);
+    				return new KVMessageImpl(KVMessage.StatusType.PUT_UPDATE, value);
+
 		    	}
 			}
 			else{
 				if(value.equals("null")){
-					response = new KVMessageImpl(KVMessage.StatusType.DELETE_ERROR);
+					return new KVMessageImpl(KVMessage.StatusType.DELETE_ERROR);
 				}
 				else{
 					database.put(key, value);
-					response = new KVMessageImpl(KVMessage.StatusType.PUT_SUCCESS);
+					return new KVMessageImpl(KVMessage.StatusType.PUT_SUCCESS);
 				}
 			}
     	}
     	
     	else{
-    		response = new KVMessageImpl(KVMessage.StatusType.SERVER_WRITE_LOCK);
+    		return new KVMessageImpl(KVMessage.StatusType.SERVER_WRITE_LOCK);
     	}
     	
-    	return response;
-
+    	
+    	
     }
 	
 }

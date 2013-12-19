@@ -11,15 +11,27 @@ import common.messages.KVMessageImpl;
 import common.messages.Message;
 import common.objects.Metadata;
 import common.objects.ServerInfo;
+import common.utilis.Hash;
 import communication.CommunicationModule;
+
+/**
+ * 
+ * @author Dario
+ * 
+ * Library for the communication with a KVServer
+ * It is transparent to the client, if the server is not responsible
+ * it will connect to a new one and return the correct value
+ *
+ */
 
 public class KVStore implements KVCommInterface {
 
-    private Logger logger = Logger.getRootLogger();
-    CommunicationModule connection;
-    Metadata metadata;
-    
-    public KVStore(String address, int port){
+    private Logger logger = Logger.getLogger(KVStore.class);
+    private CommunicationModule connection;
+    private Metadata metadata;
+
+
+	public KVStore(String address, int port){
             this.connection = new CommunicationModule(address, port);
     }
     
@@ -42,22 +54,29 @@ public class KVStore implements KVCommInterface {
         byte [] response = connection.receiveBytes();
         KVMessage retmsg = new KVMessageImpl(response);
         
+        // Messages which are printed back to the client
         if(retmsg.getStatus().equals(KVMessage.StatusType.PUT_SUCCESS) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.PUT_ERROR) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.PUT_UPDATE) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_STOPPED) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.DELETE_SUCCESS) ||
+        		retmsg.getStatus().equals(KVMessage.StatusType.DELETE_ERROR) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_WRITE_LOCK)){
         	
         	return retmsg;
         }
+        
+        // Server not responsible, we read the metadata received with the the message and
+        // connect to the right one
         else if(retmsg.getStatus().equals(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE)){
         	this.metadata = retmsg.getMetaData();
-        	ServerInfo serverinfo = this.metadata.get(key);
+        	ServerInfo serverinfo = this.metadata.get(Hash.md5(key));
         	disconnect();
         	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
-        	logger.info("[PUT] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
-        	return put(key, value);
+        	connection.connect();
+        	logger.debug("[PUT] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
         	
+        	return put(key, value);
         }
         else{
         	logger.error("Unexpected return message");
@@ -78,6 +97,7 @@ public class KVStore implements KVCommInterface {
         byte [] response = connection.receiveBytes();
         KVMessage retmsg = new KVMessageImpl(response);
         
+        // Messages which are printed back to the client
         if(retmsg.getStatus().equals(KVMessage.StatusType.GET_SUCCESS) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.GET_ERROR) ||
         		retmsg.getStatus().equals(KVMessage.StatusType.SERVER_STOPPED) ||
@@ -85,12 +105,16 @@ public class KVStore implements KVCommInterface {
         	
         	return retmsg;
         }
+        
+        // Read metadata and connect to the right server
         else if(retmsg.getStatus().equals(KVMessage.StatusType.SERVER_NOT_RESPONSIBLE)){
         	this.metadata = retmsg.getMetaData();
-        	ServerInfo serverinfo = this.metadata.get(key);
+        	ServerInfo serverinfo = this.metadata.get(Hash.md5(key));
         	disconnect();
         	this.connection = new CommunicationModule(serverinfo.getAddress(), serverinfo.getPort());
-        	System.out.println("[GET] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
+        	connection.connect();
+        	logger.debug("[GET] server not responsible, connecting to " + serverinfo.getAddress() + ":" + serverinfo.getPort());
+        	
         	return get(key);
         	
         }

@@ -5,23 +5,35 @@ import java.net.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import logger.LogSetup;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+
 import common.objects.Metadata;
 
+/**
+ * KVServer main class
+ * It holds the database and the variables necessary for
+ * interaction with the distributed system
+ * @author ambi
+ *
+ */
 public class KVServer extends Thread  {
 	
-	private static Logger logger = Logger.getRootLogger();
+
 	private int port;
-
-
+	private Logger logger;
 	private ServerSocket serverSocket;
 	private boolean running;
     private Map<String, String> database;
     private boolean acceptingRequests;
     private boolean writeLock;
 	private Metadata metadata;
+    private String key;
+    
+
 
 	/**
 	 * Start KV Server at given port
@@ -29,9 +41,11 @@ public class KVServer extends Thread  {
 	 */
 	public KVServer(int port) {
 		this.port = port;
+		logger = Logger.getLogger("KVServer at " + port);
 		this.database = Collections.synchronizedMap(new HashMap<String,String>());
 		this.acceptingRequests = false;
 		this.writeLock = false;
+		logger.info("Starting");
 	}
 	
     /**
@@ -52,6 +66,17 @@ public class KVServer extends Thread  {
             return false;
         }
     }
+    
+    // GETTERS AND SETTERS
+    // -------------------------
+	
+    public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key){
+		this.key = key;
+	}
 	
     /**
 	 * @return the metadata
@@ -120,8 +145,7 @@ public class KVServer extends Thread  {
 	                		+ client.getInetAddress().getHostName() 
 	                		+  " on port " + client.getPort());
 	            } catch (IOException e) {
-	            	logger.error("Error! " +
-	            			"Unable to establish connection. \n", e);
+	            	logger.error("Shutting down");
 	            }
 	        }
         }
@@ -167,7 +191,6 @@ public class KVServer extends Thread  {
 			} else {
 				int port = Integer.parseInt(args[0]);
 				new KVServer(port).start();
-				logger.info("Starting server on port " + port);
 			}
 		} catch (IOException e) {
 			System.out.println("Error! Unable to initialize logger!");
