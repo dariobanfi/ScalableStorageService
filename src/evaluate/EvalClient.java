@@ -28,16 +28,16 @@ public class EvalClient implements Runnable {
 	private HashMap<String, String> requestMap = null;
 	private ArrayList<String> keys = null;
 	private ArrayList<String> getKeys = new ArrayList<String>();
-	private int putsSent = 0;
-	private int putsSuccess = 0;
-	private int putsFailed = 0;
 	
-	private int getsSent = 0;
-	private int getsSuccess = 0;
-	private int getsFailed = 0;
+	private int pSent = 0;
+	private int pSuccess = 0;
+	private int pFailed = 0;
+	private int gSent = 0;
+	private int gSuccess = 0;
+	private int gFailed = 0;
 	
 	public Logger logger;
-	public Logger perfLog;
+	public Logger mLog;
 	
 	public EvalClient(String name, Eval instance) {
 		this.evalInstance = instance;
@@ -50,13 +50,12 @@ public class EvalClient implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.perfLog = log.getLogger();
+		this.mLog = log.getLogger();
 	}
 	
 	public void run() {
 		if (!Thread.interrupted()) {
 			if (requestMap == null) {
-				evalInstance.getLogger().warn(this.getName() + " has an empty request map. Exiting.");
 				System.exit(1);
 			}
 			
@@ -76,41 +75,33 @@ public class EvalClient implements Runnable {
 						KVStore.disconnect();
 						return;
 					}
-					
-					// report bps each second
+
 					if (((double)System.nanoTime() / 1000000) >= timerNextPing) {
-						evalInstance.getPerfInfo(this).updateThroughput(bitsSecond);
+						evalInstance.getmInfo(this).updateThroughput(bitsSecond);
 						bitsSecond = 0;
 					}
 					
-					/* Put a random key value pair from the clients kv map */
 					Random rand = new Random();
 					int value = rand.nextInt(keys.size());
-					
 					startTime = System.nanoTime(); 
-					
 					KVMessage result = KVStore.put(keys.get(value), requestMap.get(keys.get(value)));
-					elapsedTime = System.nanoTime() - startTime; // elapsed time in nano seconds
-					double elapsedTimePut = (double)elapsedTime / 1000000; // to ms
+					elapsedTime = System.nanoTime() - startTime; 
+					double elapsedTimePut = (double)elapsedTime / 1000000;
 					
 					requestMap.remove(keys.get(value));
 					getKeys.add(keys.remove(value));
 					
-					putsSent++;
+					pSent++;
 					if (result != null && (result.getStatus().equals(StatusType.PUT_SUCCESS) || result.getStatus().equals(StatusType.PUT_UPDATE))) {
-						System.out.println("Successfully put <" + keys.get(value) + ", " + requestMap.get(keys.get(value)) + "> (" + result.getStatus().toString() + ")");
-						perfLog.info("Put latency: " + elapsedTimePut);
-						putsSuccess++;
-						
+						mLog.info("PUT Latency: " + elapsedTimePut);
+						pSuccess++;
 						String dataSent = keys.get(value) + requestMap.get(keys.get(value));
 						bitsSecond += dataSent.getBytes().length * 8;
-						
-						perfLog.info("PUT BPS added: " + dataSent.getBytes().length * 8 + "for: " + dataSent);
-						
+						mLog.info("PUT Bytes added: " + dataSent.getBytes().length * 8 + "for: " + dataSent);
 						evalInstance.updateData(keys.get(value));
 					} else {
-						putsFailed++;
-						perfLog.info(result.getStatus()+" - Put latency: " + elapsedTimePut);
+						pFailed++;
+						mLog.info(result.getStatus()+" - PUT Latency: " + elapsedTimePut);
 					}
 					
 					int numAvailableKeys = evalInstance.getNumAvailableKeys();
@@ -119,47 +110,43 @@ public class EvalClient implements Runnable {
 						String randomKey = evalInstance.getAvailableKey(value);
 						
 						if (randomKey == null) {
-							evalInstance.getLogger().error(name + " TRIED TO GET INVALID KEY: " + value);
 							System.exit(1);
 						}
 						
 						startTime = System.nanoTime();
-						// evalInstance.getLogger().info("Trying to get " + randomKey);
 						result = KVStore.get(randomKey);				
-						elapsedTime = System.nanoTime() - startTime; // elapsed time in nano seconds
+						elapsedTime = System.nanoTime() - startTime; 
 						
-						// retry get
 						if (result.getStatus().equals(StatusType.GET_ERROR)) {
 							startTime = System.nanoTime();
 							result = KVStore.get(randomKey);
-							elapsedTime = System.nanoTime() - startTime; // elapsed time in nano seconds
+							elapsedTime = System.nanoTime() - startTime; 
 						}
 						
-						double elapsedTimeGet = (double)elapsedTime / 1000000; // to ms
+						double elapsedTimeGet = (double)elapsedTime / 1000000; 
 						
-						getsSent++;
+						gSent++;
 						if (result != null && (result.getStatus().equals(StatusType.GET_SUCCESS))) {
-							perfLog.info("Get latency: " + elapsedTimeGet);
-							getsSuccess++;
-							
+							mLog.info("GET Latency: " + elapsedTimeGet);
+							gSuccess++;
 							String dataRec = result.getValue() + result.getKey();
 							bitsSecond += dataRec.getBytes().length * 8;
-							perfLog.info("GET BPS added: " + dataRec.getBytes().length * 8 + "for: " + dataRec);
+							mLog.info("GET Bytes: " + dataRec.getBytes().length * 8 + " for: " + dataRec);
 						} else {
-							getsFailed++;
-							perfLog.info(result.getStatus()+" - Get latency: " + elapsedTimeGet);
+							gFailed++;
+							mLog.info(result.getStatus()+" - GET latency: " + elapsedTimeGet);
 						}
 						
-						evalInstance.getPerfInfo(this).update(elapsedTimePut, elapsedTimeGet);
+						evalInstance.getmInfo(this).update(elapsedTimePut, elapsedTimeGet);
 					}
 				}
 				
-				double LatencyGetAvg = Math.round(evalInstance.getPerfInfo(this).getLatencyGet());
-				double LatencyPutAvg = Math.round(evalInstance.getPerfInfo(this).getLatencyPut());
-				double bpsAvg = Math.round(evalInstance.getPerfInfo(this).getThroughpout());
+				double LatencyGetAvg = Math.round(evalInstance.getmInfo(this).getLatencyGet());
+				double LatencyPutAvg = Math.round(evalInstance.getmInfo(this).getLatencyPut());
+				double bpsAvg = Math.round(evalInstance.getmInfo(this).getThroughpout());
 				
-				evalInstance.getLogger().info(this.name + " finished. " + putsSuccess + "/" + putsSent + "; " + getsSuccess + "/" + getsSent);
-				evalInstance.getLogger().info("           Avg Get Latency: " + LatencyGetAvg + ", Avg Put Latency: " + LatencyPutAvg + ", Avg bps: " + bpsAvg);
+				mLog.info(this.name + " finished. " + pSuccess + "/" + pSent + "; " + gSuccess + "/" + gSent);
+				mLog.info("Average Get Latency: " + LatencyGetAvg + ", Average Put Latency: " + LatencyPutAvg + ", Average Throughput: " + bpsAvg);
 			} catch (ConnectException e) {
 				evalInstance.getLogger().error("ConnectException: " + e.getMessage());
 			} catch (UnknownHostException e) {

@@ -1,10 +1,10 @@
 package evaluate;
 
 public class Measurement {
-	private double latencyPut = 0.0;
-	private double latencyGet = 0.0;
+	private double latencyPut = 0;
+	private double latencyGet = 0;
 	
-	private double throughputBPS = 0.0;
+	private double throughput = 0;
 	
 	int valueCount = 0;
 	int throughputCount = 0;
@@ -17,7 +17,7 @@ public class Measurement {
 	
 	public void updateThroughput (double throughput) {
 		throughputCount++;
-		throughputBPS = throughputBPS + ((throughput - throughputBPS) / throughputCount);
+		throughput = throughput + ((throughput - throughput) / throughputCount);
 	}
 	
 	public double getLatencyPut() {
@@ -29,6 +29,6 @@ public class Measurement {
 	}
 	
 	public double getThroughpout() {
-		return this.throughputBPS;
+		return this.throughput;
 	}
 }
