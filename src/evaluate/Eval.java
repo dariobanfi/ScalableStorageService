@@ -39,7 +39,7 @@ public class Eval {
 	public static final String ENRON_KEY = "Message-ID: "; // KEY Identifier of Enron Emails
 	public static final String ENRON_VALUE = "Subject: "; // Value Identifier of Enron Emails
 
-	public Eval(String enronPath, int numClients, int numServers, int numRequestsPerClient) {
+	public Eval(String enronPath, int numClients, int numServers, int numRequestsPerClient, String defaultServerIP, int defaultServerPort) {
 		this.enronPath = enronPath;
 		this.numClients = numClients;
 		this.numRequestsPerClient = numRequestsPerClient;
@@ -64,7 +64,7 @@ public class Eval {
 		startServers(numServers);
 		
 		for (int i = 0; i < this.numClients; i++) {
-			clients.add(new EvalClient("CLIENT " + i, this));
+			clients.add(new EvalClient("CLIENT " + i, this, defaultServerIP, defaultServerPort));
 		}
 		
 		for (EvalClient client : clients) {
@@ -215,7 +215,7 @@ public class Eval {
 		
 	}
 	
-	public void start(String address, int port) throws ConnectException, UnknownHostException, IOException {	
+	public void start() throws ConnectException, UnknownHostException, IOException {	
 		clientThreads = new ArrayList<Thread>();
 		
 		for (EvalClient client : clients) {
@@ -259,8 +259,8 @@ public class Eval {
 	
 	public static void main(String[] args) {
 
-		if (args.length != 1) {
-			System.out.println("Invalid Argument");
+		if (args.length != 6) {
+			System.out.println("Invalid Argument - Should be something like [java -jar ms3-evaluator.jar <Path to enron files> <No of clients> <No of Servers> <No of requests> <default Server IP> <default Server Port>]");
 			System.exit(1);
 		}
 		
@@ -269,12 +269,16 @@ public class Eval {
 		 * Arg 1 - maildir path of Enron Data
 		 * Arg 2 - number of clients
 		 * Arg 3 - number of servers
-		 * Arg 5 - number of requests for each client 
+		 * Arg 4 - number of requests for each client 
+		 * Arg 5 - default client IP
+		 * Arg 6 - default client Port
 		 */
-		Eval evaluator = new Eval(args[0], 5, 3, 200);
+		
+		
+		Eval evaluator = new Eval(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), args[4], Integer.parseInt(args[5]));
 		
 		try {
-			evaluator.start("10.211.55.18", 5000); //Default for Alex, "127.0.0.1" for all others
+			evaluator.start(); 
 			
 			// wait for threads to conclude
 			for (Thread ethread : evaluator.clientThreads) {

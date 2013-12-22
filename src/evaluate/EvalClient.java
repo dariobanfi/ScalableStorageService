@@ -19,8 +19,8 @@ import common.messages.KVMessage.StatusType;
 import app_kvClient.KVClient;
 
 public class EvalClient implements Runnable {
-	public static String defaultServer = "10.211.55.18"; //Alex Default Server
-	public static int defaultPort = 50000;
+	public static String defaultServer; //Alex Default Server
+	public static int defaultPort;
 	
 	Eval evalInstance;
 	private client.KVStore KVStore;
@@ -39,9 +39,11 @@ public class EvalClient implements Runnable {
 	public Logger logger;
 	public Logger mLog;
 	
-	public EvalClient(String name, Eval instance) {
+	public EvalClient(String name, Eval instance, String defaultServerIP, int defaultServerPort) {
 		this.evalInstance = instance;
 		this.name = name;
+		defaultServer = defaultServerIP;
+		defaultPort = defaultServerPort;
 		
 		LogSetup log = null;
 		try {
@@ -143,7 +145,7 @@ public class EvalClient implements Runnable {
 				
 				double LatencyGetAvg = Math.round(evalInstance.getmInfo(this).getLatencyGet());
 				double LatencyPutAvg = Math.round(evalInstance.getmInfo(this).getLatencyPut());
-				double bpsAvg = Math.round(evalInstance.getmInfo(this).getThroughpout());
+				double bpsAvg = Math.round(evalInstance.getmInfo(this).getThroughput());
 				
 				mLog.info(this.name + " finished. " + pSuccess + "/" + pSent + "; " + gSuccess + "/" + gSent);
 				mLog.info("Average Get Latency: " + LatencyGetAvg + ", Average Put Latency: " + LatencyPutAvg + ", Average Throughput: " + bpsAvg);
