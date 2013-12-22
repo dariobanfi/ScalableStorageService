@@ -12,6 +12,7 @@ import org.apache.commons.io.*;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import client.KVStore;
 import common.messages.*;
 import common.objects.Metadata;
 import common.objects.ServerInfo;
@@ -268,7 +269,7 @@ public class Eval {
 	public static void main(String[] args) {
 
 		if (args.length != 6) {
-			System.out.println("Invalid Argument - Should be something like [java -jar ms3-evaluator.jar <Path to enron files> <No of clients> <No of Servers> <No of requests> <default Server IP> <default Server Port>]");
+			System.out.println("Invalid Argument");
 			System.exit(1);
 		}
 		
