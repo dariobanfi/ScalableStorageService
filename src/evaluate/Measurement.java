@@ -28,7 +28,7 @@ public class Measurement {
 		return this.latencyGet;
 	}
 	
-	public double getThroughpout() {
+	public double getThroughput() {
 		return this.throughput;
 	}
 }

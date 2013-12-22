@@ -54,7 +54,7 @@ public class Eval {
 		
 		LogSetup ls2 = null;
 		try {
-			ls2 = new LogSetup("logs/perfData-" + numClients + "-" + numServers + "-" + numRequestsPerClient + ".log", Level.ALL);
+			ls2 = new LogSetup("logs/mData-" + numClients + "-" + numServers + "-" + numRequestsPerClient + ".log", Level.ALL);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -237,7 +237,7 @@ public class Eval {
 			
 			avgLatencyGet += mInfo.getLatencyGet();
 			avgLatencyPut += mInfo.getLatencyPut();
-			avgThroughput += mInfo.getThroughpout();
+			avgThroughput += mInfo.getThroughput();
 		}
 		
 		avgLatencyGet /= clients.size();
