@@ -1,34 +1,34 @@
 package evaluate;
 
 public class Measurement {
-	private double latencyPut = 0;
-	private double latencyGet = 0;
+	private double lPut = 0;
+	private double lGet = 0;
 	
 	private double throughput = 0;
 	
-	int valueCount = 0;
-	int throughputCount = 0;
-	
-	public void update(double latencyPutNew, double latencyGetNew) {
-		valueCount++;
-		latencyPut = latencyPut + ((latencyPutNew - latencyPut) / valueCount);
-		latencyGet = latencyGet + ((latencyGetNew - latencyGet) / valueCount);
-	}
+	int i = 0;
+	int tCount = 0;
 	
 	public void updateThroughput (double throughput) {
-		throughputCount++;
-		throughput = throughput + ((throughput - throughput) / throughputCount);
+		tCount++;
+		throughput = throughput + ((throughput - throughput) / tCount);
 	}
 	
 	public double getLatencyPut() {
-		return this.latencyPut;
+		return this.lPut;
 	}
 	
 	public double getLatencyGet() {
-		return this.latencyGet;
+		return this.lGet;
 	}
 	
 	public double getThroughput() {
 		return this.throughput;
+	}
+	
+	public void update(double latencyPut, double latencyGet) {
+		i++;
+		lPut = lPut + ((latencyPut - latencyPut)/i);
+		lGet = lGet + ((latencyGet - latencyGet)/i);
 	}
 }

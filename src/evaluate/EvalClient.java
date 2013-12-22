@@ -31,10 +31,8 @@ public class EvalClient implements Runnable {
 	
 	private int pSent = 0;
 	private int pSuccess = 0;
-	private int pFailed = 0;
 	private int gSent = 0;
 	private int gSuccess = 0;
-	private int gFailed = 0;
 	
 	public Logger logger;
 	public Logger mLog;
@@ -47,7 +45,7 @@ public class EvalClient implements Runnable {
 		
 		LogSetup log = null;
 		try {
-			log = new LogSetup("logs/perf.log", Level.INFO);
+			log = new LogSetup("logs/m.log", Level.INFO);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -60,13 +58,9 @@ public class EvalClient implements Runnable {
 			if (requestMap == null) {
 				System.exit(1);
 			}
-			
 			KVStore = new KVStore(defaultServer, defaultPort);
-	
 			try {
-				
 	            KVStore.connect();
-				
 				long startTime = 0;
 				long elapsedTime = 0;
 				long bitsSecond = 0;
@@ -99,34 +93,26 @@ public class EvalClient implements Runnable {
 						pSuccess++;
 						String dataSent = keys.get(value) + requestMap.get(keys.get(value));
 						bitsSecond += dataSent.getBytes().length * 8;
-						mLog.info("PUT Bytes added: " + dataSent.getBytes().length * 8 + "for: " + dataSent);
+						mLog.info("PUT Bytes added: " + bitsSecond + "for: " + dataSent);
 						evalInstance.updateData(keys.get(value));
-					} else {
-						pFailed++;
-						mLog.info(result.getStatus()+" - PUT Latency: " + elapsedTimePut);
-					}
+					} 
 					
 					int numAvailableKeys = evalInstance.getNumAvailableKeys();
 					if (numAvailableKeys > 0) {
 						value = rand.nextInt(evalInstance.getNumAvailableKeys());
 						String randomKey = evalInstance.getAvailableKey(value);
-						
 						if (randomKey == null) {
 							System.exit(1);
 						}
-						
 						startTime = System.nanoTime();
 						result = KVStore.get(randomKey);				
-						elapsedTime = System.nanoTime() - startTime; 
-						
+						elapsedTime = System.nanoTime() - startTime;
 						if (result.getStatus().equals(StatusType.GET_ERROR)) {
 							startTime = System.nanoTime();
 							result = KVStore.get(randomKey);
 							elapsedTime = System.nanoTime() - startTime; 
 						}
-						
 						double elapsedTimeGet = (double)elapsedTime / 1000000; 
-						
 						gSent++;
 						if (result != null && (result.getStatus().equals(StatusType.GET_SUCCESS))) {
 							mLog.info("GET Latency: " + elapsedTimeGet);
@@ -134,21 +120,17 @@ public class EvalClient implements Runnable {
 							String dataRec = result.getValue() + result.getKey();
 							bitsSecond += dataRec.getBytes().length * 8;
 							mLog.info("GET Bytes: " + dataRec.getBytes().length * 8 + " for: " + dataRec);
-						} else {
-							gFailed++;
-							mLog.info(result.getStatus()+" - GET latency: " + elapsedTimeGet);
-						}
-						
+						} 
 						evalInstance.getmInfo(this).update(elapsedTimePut, elapsedTimeGet);
 					}
 				}
 				
-				double LatencyGetAvg = Math.round(evalInstance.getmInfo(this).getLatencyGet());
-				double LatencyPutAvg = Math.round(evalInstance.getmInfo(this).getLatencyPut());
+				double LatGetAvg = Math.round(evalInstance.getmInfo(this).getLatencyGet());
+				double LatPutAvg = Math.round(evalInstance.getmInfo(this).getLatencyPut());
 				double bpsAvg = Math.round(evalInstance.getmInfo(this).getThroughput());
 				
-				mLog.info(this.name + " finished. " + pSuccess + "/" + pSent + "; " + gSuccess + "/" + gSent);
-				mLog.info("Average Get Latency: " + LatencyGetAvg + ", Average Put Latency: " + LatencyPutAvg + ", Average Throughput: " + bpsAvg);
+				System.out.println(this.name + " finished. " + pSuccess + "/" + pSent + "; " + gSuccess + "/" + gSent);
+				System.out.println("Average Get Latency: " + LatGetAvg + ", Average Put Latency: " + LatPutAvg + ", Average Throughput: " + bpsAvg);
 			} catch (ConnectException e) {
 				evalInstance.getLogger().error("ConnectException: " + e.getMessage());
 			} catch (UnknownHostException e) {

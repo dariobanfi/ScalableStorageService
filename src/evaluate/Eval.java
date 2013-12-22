@@ -24,15 +24,18 @@ public class Eval {
 	
 	private int numClients;
 	private int numRequestsPerClient;
-	private String enronPath = "";
-	private HashMap<EvalClient, HashMap<String, String>> requestMap; 
-	private ConcurrentHashMap<Integer, String> availableData; 
-	private HashMap<Integer, String> indexMap; 
+	private String enronPath = ""; //Enron Path
+	private HashMap<String, String> kvMap;	//Map of Enron Data
+	private HashMap<Integer, String> keyMap;	//Map of Enron Data Keys
+	private HashMap<Integer, String> enronFiles;  // List of Enron Files
+	private ArrayList<EvalClient> clients;	//List of Clients
+	private ArrayList<Thread> clientThreads; //List of Threads
+	private HashMap<EvalClient, HashMap<String, String>> ClientRMap; 
+	private ConcurrentHashMap<Integer, String> aData; 
+	
 	private HashMap<EvalClient, Measurement> mMap; 
-	private HashMap<String, String> kvMap;	
-	private HashMap<Integer, String> enronFiles; 
-	private ArrayList<EvalClient> clients;	
-	private ArrayList<Thread> clientThreads;
+	
+
 	public Logger mLogger;
 	private ServerInfo temp_info;
 	
@@ -46,20 +49,20 @@ public class Eval {
 			
 		clients = new ArrayList<EvalClient>();
 		kvMap = new HashMap<String, String>();
-		indexMap = new HashMap<Integer, String>();
-		requestMap = new HashMap<EvalClient, HashMap<String, String>>();
+		keyMap = new HashMap<Integer, String>();
+		ClientRMap = new HashMap<EvalClient, HashMap<String, String>>();
 		enronFiles = new HashMap<Integer, String>();
 		mMap = new HashMap<EvalClient, Measurement>();
-		availableData = new ConcurrentHashMap<Integer, String>();
+		aData = new ConcurrentHashMap<Integer, String>();
 		
-		LogSetup ls2 = null;
+		LogSetup xlog = null;
 		try {
-			ls2 = new LogSetup("logs/mData-" + numClients + "-" + numServers + "-" + numRequestsPerClient + ".log", Level.ALL);
+			xlog = new LogSetup("logs/mData-" + numClients + "-" + numServers + "-" + numRequestsPerClient + ".log", Level.ALL);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.mLogger = ls2.getLogger();
+		this.mLogger = xlog.getLogger();
 		
 		startServers(numServers);
 		
@@ -77,10 +80,10 @@ public class Eval {
 	
 	public synchronized String getAvailableKey(int id) {
 		
-		if (availableData.containsKey(id)) {
-			return availableData.get(id);
+		if (aData.containsKey(id)) {
+			return aData.get(id);
 		} else {			
-			for (Entry<Integer, String> entry : availableData.entrySet()) {
+			for (Entry<Integer, String> entry : aData.entrySet()) {
 				System.out.println("ID: " + entry.getKey() + ", Key: " + entry.getValue());
 			}
 			
@@ -89,8 +92,8 @@ public class Eval {
 	}
 	
 	public synchronized void updateData(String key) {
-		if (!availableData.containsKey(key)) {
-			availableData.put(availableData.size(), key);
+		if (!aData.containsKey(key)) {
+			aData.put(aData.size(), key);
 		}
 	}
 	
@@ -100,7 +103,7 @@ public class Eval {
 	
 	
 	public synchronized int getNumAvailableKeys() {
-		return availableData.size();
+		return aData.size();
 	}
 
 	public void initEnron(String enronPath) {
@@ -138,8 +141,8 @@ public class Eval {
 					}
 					if (!valKey.equals("") && !valValue.equals("")) {
 						if (!kvMap.containsKey(valKey)) {
-							indexMap.put(kvMap.size(), valKey);
 							kvMap.put(valKey, valValue);
+							keyMap.put(kvMap.size(), valKey);
 						}
 					}
 				} finally {
@@ -193,24 +196,26 @@ public class Eval {
 		}
 		
 		for (EvalClient client : clients) {
-			if (!requestMap.containsKey(client)) {
-				requestMap.put(client, new HashMap<String, String>());
+			if (!ClientRMap.containsKey(client)) {
+				ClientRMap.put(client, new HashMap<String, String>());
 			}
 			
-			int numRequestPairs = kvMap.size();
-			Random rand = new Random();
+			HashMap<String, String> clientTable = new HashMap<String, String>();
 			
 			for (int i = 0; i < numRequestsPerClient; i++) {
-				int rval = rand.nextInt(numRequestPairs);
-				String key = indexMap.get(rval);
+				
+				int numRequestPairs = keyMap.size();
+				Random R = new Random();
+				int X = R.nextInt(numRequestPairs);
+				String key = keyMap.get(X);
 				if (key != null && !key.equals("")) {
 					String value = kvMap.get(key);
-					HashMap<String, String> clientRequests = requestMap.get(client);
-					if (clientRequests != null) {
-						clientRequests.put(key, value);
-					} 
-				} 
+					clientTable.put(key, value);
+					keyMap.remove(key);
+				} 				
 			} 
+			
+			ClientRMap.put(client, clientTable);
 		} 
 		
 	}
@@ -219,7 +224,7 @@ public class Eval {
 		clientThreads = new ArrayList<Thread>();
 		
 		for (EvalClient client : clients) {
-			client.setRequestMap(requestMap.get(client));
+			client.setRequestMap(ClientRMap.get(client));
 			Thread t = new Thread(client);
 			t.setName(client.getName() + " " + t.getName());
 			clientThreads.add(t);
@@ -234,14 +239,13 @@ public class Eval {
 		
 		for (EvalClient client : clients) {
 			Measurement mInfo = mMap.get(client);
-			
 			avgLatencyGet += mInfo.getLatencyGet();
 			avgLatencyPut += mInfo.getLatencyPut();
 			avgThroughput += mInfo.getThroughput();
 		}
 		
-		avgLatencyGet /= clients.size();
-		avgLatencyPut /= clients.size();
+		avgLatencyGet = avgLatencyGet/clients.size();
+		avgLatencyPut = avgLatencyPut/clients.size();
 		
 	mLogger.info(avgLatencyGet + "\t" + avgLatencyPut + "\t" + avgThroughput);
 	}
