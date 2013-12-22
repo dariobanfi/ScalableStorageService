@@ -62,6 +62,10 @@ public class LogSetup {
 		return valid;
 	}
 	
+	public Logger getLogger() {
+		return this.logger;
+	}
+	
 	public static String getPossibleLogLevels() {
 		return "ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF";
 	}

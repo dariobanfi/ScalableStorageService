@@ -75,7 +75,8 @@ public class ECSServer implements ECSClientInterface{
 		
 		// Getting directory of jar files
 		
-		String workdir = System.getProperty("user.dir");
+		//String workdir = System.getProperty("user.dir");
+		String workdir = "/tmp"; //Require for Alex Servers
 		
 		// Setting max length of servers if the client asks for a number too big
 		if(numberOfNodes>serverPool.size())

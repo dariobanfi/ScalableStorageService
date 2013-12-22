@@ -65,9 +65,11 @@ public class ECSClient{
 	                        		}
 	                        	else
 	                        		System.out.println("Initservice must be called with a number > 0");
-							} catch (IOException  | NumberFormatException e) {
+							} catch (IOException e) {
 								System.out.println("Error sending command");
-								}
+							} catch ( NumberFormatException e){
+								System.out.println("Incorrect Number Format");
+							}
                         }
 
                         else {

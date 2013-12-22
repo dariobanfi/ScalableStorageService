@@ -25,6 +25,11 @@
   <property name="ecsmanifest.file" value="ECS_MANIFEST.MF"/>
   <property name="ecsmain.class" value="app_kvEcs.ECSServer"/>
 
+    <!-- Configuration for Evaluator -->
+  <property name="evaljar.file"      value="ms3-evaluator.jar"/>
+  <property name="evalmanifest.file" value="EVAL_MANIFEST.MF"/>
+  <property name="evalmain.class" value="evaluate.Eval"/>
+
   <!-- path to libraries-->
   <path id="external.jars">
     <fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -59,6 +64,7 @@
     <delete file="${serverjar.file}" />
     <delete file="${servermanifest.file}" />
     <delete file="${ecsjar.file}" />
+     <delete file="${evaljar.file}" />
     <delete file="${ecsmanifest.file}" />
   </target>
 
@@ -123,6 +129,24 @@
 
     <jar destfile="${ecsjar.file}" basedir="${build.dir}" 
         manifest="${ecsmanifest.file}">
+      <fileset dir="${build.dir}" includes="**/*.class" />
+      <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+    </jar>
+  </target>
+
+    <!-- build ECS jar -->
+  <target name="build-eval-jar" depends="build">
+    <delete file="${evaljar.file}" />
+    <delete file="${evalmanifest.file}" />
+
+    <manifest file="${evalmanifest.file}" >
+      <attribute name="built-by" value="${user.name}" />
+      <attribute name="Main-Class" value="${evalmain.class}" />
+      <attribute name="Class-Path" value="${project.classpath}"/>
+    </manifest>
+
+    <jar destfile="${evaljar.file}" basedir="${build.dir}" 
+        manifest="${evalmanifest.file}">
       <fileset dir="${build.dir}" includes="**/*.class" />
       <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
     </jar>
