@@ -256,7 +256,7 @@ public class Eval {
 	}
 	
 	public ECSServer startServers(int numberOfServers) {
-		ECSServer ecs = new ECSServer("settings.alex.config");		
+		ECSServer ecs = new ECSServer("settings.config");		
 		ecs.initService(numberOfServers);
 		ecs.start();
 		return ecs;
