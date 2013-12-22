@@ -29,7 +29,9 @@ public class ECSServer implements ECSClientInterface{
 	// Server parsed from settings.config and server launched
 	List <ServerInfo> serverPool = new ArrayList<ServerInfo>();
  	List <ServerInfo> startedServers = new ArrayList<ServerInfo>();
- 	
+
+
+
 	private Metadata metadata;
 	private boolean init=false;
 
@@ -449,6 +451,35 @@ public class ECSServer implements ECSClientInterface{
 				logger.error("[METADATA UPDATE] Unable to connect to " + i.toString());
 			}
 		}
+	}
+	
+ 	
+	/**
+	 * @return the serverPool
+	 */
+	public List<ServerInfo> getServerPool() {
+		return serverPool;
+	}
+
+	/**
+	 * @param serverPool the serverPool to set
+	 */
+	public void setServerPool(List<ServerInfo> serverPool) {
+		this.serverPool = serverPool;
+	}
+
+	/**
+	 * @return the startedServers
+	 */
+	public List<ServerInfo> getStartedServers() {
+		return startedServers;
+	}
+
+	/**
+	 * @param startedServers the startedServers to set
+	 */
+	public void setStartedServers(List<ServerInfo> startedServers) {
+		this.startedServers = startedServers;
 	}
 	
 

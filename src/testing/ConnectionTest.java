@@ -3,11 +3,11 @@ package testing;
 import java.net.UnknownHostException;
 
 import client.KVStore;
-
 import junit.framework.TestCase;
 
 
 public class ConnectionTest extends TestCase {
+
 
 	
 	public void testConnectionSuccess() {
@@ -18,6 +18,7 @@ public class ConnectionTest extends TestCase {
 		try {
 			kvClient.connect();
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			ex = e;
 		}	
 		

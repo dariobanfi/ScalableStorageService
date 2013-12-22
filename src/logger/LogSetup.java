@@ -62,8 +62,8 @@ public class LogSetup {
 		return valid;
 	}
 	
-	public Logger getLogger() {
-		return this.logger;
+	public static Logger getLogger() {
+		return logger;
 	}
 	
 	public static String getPossibleLogLevels() {

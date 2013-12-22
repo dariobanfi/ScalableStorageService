@@ -3,8 +3,6 @@ package communication;
 
 import java.io.*;
 import java.net.*;
-
-import org.apache.log4j.Logger;
 /**
  * @author Dario
  * Communication module which handles basic functions like connecting, sending bytes,

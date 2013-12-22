@@ -1,5 +1,4 @@
 package testing;
-
 import org.junit.Test;
 
 import client.KVStore;
@@ -12,6 +11,7 @@ public class InteractionTest extends TestCase {
 
 	private KVStore kvClient;
 	
+     
 	public void setUp() {
 		kvClient = new KVStore("localhost", 50000);
 		try {
@@ -27,7 +27,7 @@ public class InteractionTest extends TestCase {
 	
 	@Test
 	public void testPut() {
-		String key = "foo";
+		String key = "foobar";
 		String value = "bar";
 		KVMessage response = null;
 		Exception ex = null;
@@ -38,6 +38,8 @@ public class InteractionTest extends TestCase {
 			ex = e;
 		}
 
+		System.out.println(new String(response.getBytes()));
+		
 		assertTrue(ex == null && response.getStatus() == StatusType.PUT_SUCCESS);
 	}
 	
