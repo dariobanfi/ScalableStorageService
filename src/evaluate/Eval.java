@@ -83,10 +83,6 @@ public class Eval {
 		if (aData.containsKey(id)) {
 			return aData.get(id);
 		} else {			
-			for (Entry<Integer, String> entry : aData.entrySet()) {
-				System.out.println("ID: " + entry.getKey() + ", Key: " + entry.getValue());
-			}
-			
 			return null;
 		}
 	}
@@ -224,7 +220,7 @@ public class Eval {
 		clientThreads = new ArrayList<Thread>();
 		
 		for (EvalClient client : clients) {
-			client.setRequestMap(ClientRMap.get(client));
+			client.setkvMap(ClientRMap.get(client));
 			Thread t = new Thread(client);
 			t.setName(client.getName() + " " + t.getName());
 			clientThreads.add(t);
@@ -236,18 +232,26 @@ public class Eval {
 		double avgLatencyGet = 0;
 		double avgLatencyPut = 0;
 		double avgThroughput = 0;
+		int totalPSent = 0;
+		int totalGSent = 0;
+		int totalPSuccess = 0;
+		int totalGSuccess = 0;
 		
 		for (EvalClient client : clients) {
 			Measurement mInfo = mMap.get(client);
 			avgLatencyGet += mInfo.getLatencyGet();
 			avgLatencyPut += mInfo.getLatencyPut();
 			avgThroughput += mInfo.getThroughput();
+			totalPSent += mInfo.getSentPut();
+			totalGSent += mInfo.getSentGet();
+			totalPSuccess += mInfo.getSuccessPut();
+			totalGSuccess += mInfo.getSuccessGet();
 		}
 		
 		avgLatencyGet = avgLatencyGet/clients.size();
 		avgLatencyPut = avgLatencyPut/clients.size();
 		
-	mLogger.info(avgLatencyGet + "\t" + avgLatencyPut + "\t" + avgThroughput);
+	mLogger.info(avgLatencyGet + "\t" + avgLatencyPut + "\t" + avgThroughput+ "\t" + totalPSent + "\t" + totalGSent + "\t" + totalPSuccess + "\t" + totalGSuccess);
 	}
 	
 	public ECSServer startServers(int numberOfServers) {

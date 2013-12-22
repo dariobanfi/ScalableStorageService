@@ -12,11 +12,9 @@ import logger.LogSetup;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import client.KVCommInterface;
 import client.KVStore;
 import common.messages.KVMessage;
 import common.messages.KVMessage.StatusType;
-import app_kvClient.KVClient;
 
 public class EvalClient implements Runnable {
 	public static String defaultServer; //Alex Default Server
@@ -25,7 +23,7 @@ public class EvalClient implements Runnable {
 	Eval evalInstance;
 	private client.KVStore KVStore;
 	private String name;
-	private HashMap<String, String> requestMap = null;
+	private HashMap<String, String> kvMap = null;
 	private ArrayList<String> keys = null;
 	private ArrayList<String> getKeys = new ArrayList<String>();
 	
@@ -55,47 +53,57 @@ public class EvalClient implements Runnable {
 	
 	public void run() {
 		if (!Thread.interrupted()) {
-			if (requestMap == null) {
+			if (kvMap == null) {
 				System.exit(1);
 			}
 			KVStore = new KVStore(defaultServer, defaultPort);
 			try {
 	            KVStore.connect();
-				long startTime = 0;
-				long elapsedTime = 0;
+				long tStart = 0;
+				long tDuration = 0;
 				long bitsSecond = 0;
-				double timerStart = (double) System.nanoTime() /  1000000;
-				double timerNextPing = timerStart + 1000; 
-				while (keys.size() > 0) {
+				double clientTStart = (double) System.nanoTime() /  1000000;
+				double clientTNext = clientTStart + 1000; 
+				while (kvMap.size() > 0) {
 					if (Thread.interrupted()) {
 						KVStore.disconnect();
 						return;
 					}
-
-					if (((double)System.nanoTime() / 1000000) >= timerNextPing) {
+					
+					//Update Throughput
+					if (((double)System.nanoTime() / 1000000) >= clientTNext) {
 						evalInstance.getmInfo(this).updateThroughput(bitsSecond);
 						bitsSecond = 0;
 					}
 					
 					Random rand = new Random();
 					int value = rand.nextInt(keys.size());
-					startTime = System.nanoTime(); 
-					KVMessage result = KVStore.put(keys.get(value), requestMap.get(keys.get(value)));
-					elapsedTime = System.nanoTime() - startTime; 
-					double elapsedTimePut = (double)elapsedTime / 1000000;
-					
-					requestMap.remove(keys.get(value));
-					getKeys.add(keys.remove(value));
-					
+					tStart = System.nanoTime(); 
+					KVMessage result = KVStore.put(keys.get(value), kvMap.get(keys.get(value)));
 					pSent++;
+					tDuration = System.nanoTime() - tStart; 
+					
+					//Redo if Error
+					if (result.getStatus().equals(StatusType.PUT_ERROR)) {
+						tStart = System.nanoTime(); 
+						result = KVStore.put(keys.get(value), kvMap.get(keys.get(value)));
+						pSent++;
+						tDuration = System.nanoTime() - tStart; 
+					}
+					
+					double elapsedTimePut = (double)tDuration/1000000;
+				
 					if (result != null && (result.getStatus().equals(StatusType.PUT_SUCCESS) || result.getStatus().equals(StatusType.PUT_UPDATE))) {
-						mLog.info("PUT Latency: " + elapsedTimePut);
 						pSuccess++;
-						String dataSent = keys.get(value) + requestMap.get(keys.get(value));
-						bitsSecond += dataSent.getBytes().length * 8;
-						mLog.info("PUT Bytes added: " + bitsSecond + "for: " + dataSent);
+						mLog.info("PUT Latency: " + elapsedTimePut);
+						String dataSent = keys.get(value) + kvMap.get(keys.get(value));
+						bitsSecond += dataSent.getBytes().length * 8; //Convert to Bits
+						mLog.info("PUT bits added: " + bitsSecond + " for: " + dataSent);
 						evalInstance.updateData(keys.get(value));
 					} 
+					
+					kvMap.remove(keys.get(value));
+					getKeys.add(keys.remove(value));
 					
 					int numAvailableKeys = evalInstance.getNumAvailableKeys();
 					if (numAvailableKeys > 0) {
@@ -104,33 +112,32 @@ public class EvalClient implements Runnable {
 						if (randomKey == null) {
 							System.exit(1);
 						}
-						startTime = System.nanoTime();
-						result = KVStore.get(randomKey);				
-						elapsedTime = System.nanoTime() - startTime;
-						if (result.getStatus().equals(StatusType.GET_ERROR)) {
-							startTime = System.nanoTime();
-							result = KVStore.get(randomKey);
-							elapsedTime = System.nanoTime() - startTime; 
-						}
-						double elapsedTimeGet = (double)elapsedTime / 1000000; 
+						tStart = System.nanoTime();
+						result = KVStore.get(randomKey);
 						gSent++;
+						tDuration = System.nanoTime() - tStart;
+						
+						//Redo if Error
+						if (result.getStatus().equals(StatusType.PUT_ERROR)) {
+							tStart = System.nanoTime();
+							result = KVStore.get(randomKey);
+							gSent++;
+							tDuration = System.nanoTime() - tStart; 
+						}
+						
+						double elapsedTimeGet = (double)tDuration/1000000; 
 						if (result != null && (result.getStatus().equals(StatusType.GET_SUCCESS))) {
-							mLog.info("GET Latency: " + elapsedTimeGet);
 							gSuccess++;
+							mLog.info("GET Latency: " + elapsedTimeGet);
 							String dataRec = result.getValue() + result.getKey();
 							bitsSecond += dataRec.getBytes().length * 8;
-							mLog.info("GET Bytes: " + dataRec.getBytes().length * 8 + " for: " + dataRec);
+							mLog.info("GET bites added " + dataRec.getBytes().length * 8 + " for: " + dataRec);
 						} 
-						evalInstance.getmInfo(this).update(elapsedTimePut, elapsedTimeGet);
+						//Update Elapsed Time of PUT and GET
+						evalInstance.getmInfo(this).update(elapsedTimePut, elapsedTimeGet,gSent,gSuccess, pSent,pSuccess);
 					}
 				}
 				
-				double LatGetAvg = Math.round(evalInstance.getmInfo(this).getLatencyGet());
-				double LatPutAvg = Math.round(evalInstance.getmInfo(this).getLatencyPut());
-				double bpsAvg = Math.round(evalInstance.getmInfo(this).getThroughput());
-				
-				System.out.println(this.name + " finished. " + pSuccess + "/" + pSent + "; " + gSuccess + "/" + gSent);
-				System.out.println("Average Get Latency: " + LatGetAvg + ", Average Put Latency: " + LatPutAvg + ", Average Throughput: " + bpsAvg);
 			} catch (ConnectException e) {
 				evalInstance.getLogger().error("ConnectException: " + e.getMessage());
 			} catch (UnknownHostException e) {
@@ -151,14 +158,13 @@ public class EvalClient implements Runnable {
 		return this.name;
 	}
 	
-	public void setRequestMap(HashMap<String, String> map) {
-		this.requestMap = map;
-		
-		if (keys == null)
+	public void setkvMap(HashMap<String, String> map) {
+		this.kvMap = map;
+		if (keys == null){
 			keys = new ArrayList<String>();
-		
+		}	
 		keys.clear();
-		for (String key : requestMap.keySet()) {
+		for (String key : kvMap.keySet()) {
 			keys.add(key);
 		}
 	}
