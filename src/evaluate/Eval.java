@@ -29,14 +29,14 @@ public class Eval {
 	private int numRequestsPerClient;
 	private String enronPath = "";
 	
-	private ArrayList<EvalClient> clients;	
+	private ArrayList<EvalClient> clients;	// list of clients
 	private ArrayList<Thread> clientThreads;
-	private HashMap<EvalClient, HashMap<String, String>> requestMap;
-	private HashMap<Integer, String> indexMap;
-	private HashMap<String, String> kvMap;	
-	private HashMap<Integer, String> enronFiles; 
-	private HashMap<EvalClient, Measurement> perfMap; 
-	private ConcurrentHashMap<Integer, String> availableData; 
+	private HashMap<EvalClient, HashMap<String, String>> requestMap; // contains clients and their corresponding request maps, client -> kvMap
+	private HashMap<Integer, String> indexMap; // contains IDs and their keys, ID -> key
+	private HashMap<String, String> kvMap;	// key value map with data from enron dataset, keyString -> valueString
+	private HashMap<Integer, String> enronFiles; // map: enronfileIDs --> file path
+	private HashMap<EvalClient, Measurement> perfMap; // contains EvalClients and their performance info
+	private ConcurrentHashMap<Integer, String> availableData; // contains ID + key pairs of inserted data on servers
 	public Logger perfLogger;
 	private ServerInfo temp_info;
 
@@ -63,6 +63,8 @@ public class Eval {
 		}
 		this.perfLogger = ls2.getLogger();
 		
+		startServers(numServers);
+		
 		for (int i = 0; i < this.numClients; i++) {
 			clients.add(new EvalClient("CLIENT " + i, this));
 		}
@@ -72,7 +74,7 @@ public class Eval {
 		}
 		
 		initEnron(enronPath);
-		startServers(numServers);
+		
 	}
 	
 	public synchronized void updateData(String key) {
@@ -308,7 +310,7 @@ public class Eval {
 		 * Arg 3 - number of servers
 		 * Arg 5 - number of requests for each client 
 		 */
-		Eval evaluator = new Eval(args[0], 20, 1, 200);
+		Eval evaluator = new Eval(args[0], 5, 5, 200);
 		
 		try {
 			evaluator.start("10.211.55.18", 5000); //Default for Alex, "127.0.0.1" for all others

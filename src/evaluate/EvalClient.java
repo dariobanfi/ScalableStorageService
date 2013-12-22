@@ -98,7 +98,7 @@ public class EvalClient implements Runnable {
 					
 					putsSent++;
 					if (result != null && (result.getStatus().equals(StatusType.PUT_SUCCESS) || result.getStatus().equals(StatusType.PUT_UPDATE))) {
-						//System.out.println("Successfully put <" + keys.get(value) + ", " + requestMap.get(keys.get(value)) + "> (" + result.getStatus().toString() + ")");
+						System.out.println("Successfully put <" + keys.get(value) + ", " + requestMap.get(keys.get(value)) + "> (" + result.getStatus().toString() + ")");
 						perfLog.info("Put latency: " + elapsedTimePut);
 						putsSuccess++;
 						
